@@ -1,0 +1,372 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[bulgarian]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
+
+\geometry{margin=2.5cm}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red}
+}
+
+\title{
+    \vspace{2cm}
+    \textbf{Курсов проект} \\
+    \vspace{1cm}
+    \Large{P2P Архитектури при Разпределено Динамично Балансиране на Паралелни Приложения}
+}
+
+\author{
+    Изготвил: Георги Лазов \\
+    Дисциплина: Разпределени ИТ Архитектури \\
+    Специалност: Информационни системи
+}
+
+\date{Април 2026}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+\tableofcontents
+\newpage
+
+\section{Въведение}
+
+Паралелните и разпределени системи са ключови за решаването на изчислително интензивни задачи в съвременния свят. Един от основните предизвикателства при такива системи е ефективното разпределение на натоварването между процесорите/възлите, особено когато работното натоварване е нехомогенно или непредвидимо.
+
+В централизираните архитектури (Master-Slave) един главен процес координира разпределението на задачите. Този подход е прост за имплементация, но създава ``тясно място'' (bottleneck) при мащабиране. Алтернативата е \textbf{Peer-to-Peer (P2P)} архитектура, където процесите комуникират директно помежду си без централен координатор.
+
+Целта на този проект е да се изследва архитектурата на P2P паралелни приложения при разпределено динамично балансиране, като се анализират различни топологии на процесите - по-конкретно \textbf{верижна топология (chain)} и \textbf{пълен граф (all-to-all)}.
+
+\section{Теоретична основа}
+
+\subsection{Паралелни модели и SPMD}
+
+При паралелното програмиране се различават два основни модела:
+
+\begin{itemize}
+    \item \textbf{SPMD (Single Program Multiple Data)} - всички процеси изпълняват една и съща програма, но върху различни данни. Това е най-разпространеният модел при MPI приложения.
+    \item \textbf{MPMD (Multiple Program Multiple Data)} - различните процеси могат да изпълняват различни програми. Типичен пример са конвейрите за пакетна обработка.
+\end{itemize}
+
+В контекста на P2P динамичното балансиране работим основно с \textbf{SPMD модел}, където всички процеси са равнопоставени и могат да поемат произволна част от работата.
+
+\subsection{Peer-to-Peer архитектури}
+
+При P2P архитектурите няма централен координатор - всички възли (peers) са равнопоставени и комуникират директно помежду си.
+
+\textbf{Предимства:}
+\begin{itemize}
+    \item Няма единична точка на отказ
+    \item По-добра скалируемост
+    \item Разпределено вземане на решения
+\end{itemize}
+
+\textbf{Недостатъци:}
+\begin{itemize}
+    \item По-сложна координация
+    \item Възможно неоптимално разпределение
+    \item Комуникационни разходи при пълен граф
+\end{itemize}
+
+\subsection{Топологии на процесите}
+
+\subsubsection{Верижна топология (Chain/Ring)}
+
+При верижната топология всеки процес комуникира само със съседите си (ляв и десен).
+
+\textbf{Характеристики:}
+\begin{itemize}
+    \item Брой връзки: $n-1$ (за верига) или $n$ (за пръстен)
+    \item Комуникационна сложност: $O(n)$ за глобална информация
+    \item \textbf{Скалируем} - добавянето на нов процес изисква промяна само на съседните връзки
+\end{itemize}
+
+\subsubsection{Пълен граф (All-to-All)}
+
+При пълния граф всеки процес може да комуникира директно с всеки друг.
+
+\textbf{Характеристики:}
+\begin{itemize}
+    \item Брой връзки: $n(n-1)/2$
+    \item Комуникационна сложност: $O(1)$ за директна комуникация
+    \item \textbf{Не е скалируем} - комуникационните разходи растат квадратично
+\end{itemize}
+
+\subsection{Динамично балансиране на натоварването}
+
+При динамичното балансиране работата се преразпределя по време на изпълнение. В P2P контекст използваме алгоритъма \textbf{Work Stealing}:
+
+\begin{enumerate}
+    \item Процес завършва задача
+    \item Ако опашката му е празна, поисква работа от съсед
+    \item Ако съседът има достатъчно работа, споделя половината
+    \item Ако съседът също няма работа, продължава по веригата
+\end{enumerate}
+
+\section{Анализ на архитектурите}
+
+\subsection{Централизирано vs. Разпределено балансиране}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Характеристика} & \textbf{Централизирано} & \textbf{Разпределено (P2P)} \\
+\midrule
+Скалируемост & Ограничена & По-добра \\
+Сложност & Ниска & По-висока \\
+Глобална информация & Да & Не (локална) \\
+Отказоустойчивост & Ниска & По-висока \\
+\bottomrule
+\end{tabular}
+\caption{Сравнение на подходите за балансиране}
+\end{table}
+
+\subsection{Сравнение на топологии}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Критерий} & \textbf{Верига} & \textbf{Пълен граф} \\
+\midrule
+Брой връзки & $O(n)$ & $O(n^2)$ \\
+Латентност & $O(n)$ & $O(1)$ \\
+Скалируемост & Висока & Ниска \\
+Балансиране & Локално & Глобално \\
+\bottomrule
+\end{tabular}
+\caption{Сравнение на топологиите}
+\end{table}
+
+\subsection{Хардуерни аспекти}
+
+При облачни инфраструктури (напр. Amazon AWS) топологията на мрежата влияе пряко върху производителността:
+
+\begin{itemize}
+    \item \textbf{Placement Groups} - възлите в една група са с ниска латентност (<1ms)
+    \item \textbf{Elastic Fabric Adapter} - специализиран интерфейс за HPC (до 100 Gbps)
+    \item \textbf{NUMA архитектура} - трябва да се съобрази при многопроцесорни възли
+\end{itemize}
+
+\section{Проектиране}
+
+\subsection{Функционално проектиране}
+
+В рамките на проекта са реализирани три варианта:
+\begin{enumerate}
+    \item Статично циклично балансиране (baseline)
+    \item Динамично P2P балансиране с верижна топология
+    \item Динамично P2P балансиране с пълен граф
+\end{enumerate}
+
+\textbf{Проблем за тестване:} Рекурсивно изчисление на числата на Фибоначи - задача с нехомогенно натоварване.
+
+\subsection{Архитектура на решението}
+
+\textbf{Модел:} SPMD - всички процеси изпълняват един и същ код.
+
+\textbf{Комуникационен протокол:}
+\begin{itemize}
+    \item \texttt{WORK\_REQUEST} - искане за работа
+    \item \texttt{WORK\_RESPONSE} - отговор с работа
+    \item \texttt{TERMINATE} - сигнал за край
+\end{itemize}
+
+\subsection{UML диаграми}
+
+\subsubsection{Диаграма на последователността при верижна топология}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=2cm, auto]
+    \tikzstyle{process} = [rectangle, draw, text width=1.5cm, text centered, minimum height=0.8cm]
+    \tikzstyle{arrow} = [thick,->,>=stealth]
+
+    \node[process] (P0) {P0};
+    \node[process, right=of P0] (P1) {P1};
+    \node[process, right=of P1] (P2) {P2};
+    \node[process, right=of P2] (P3) {P3};
+
+    \draw[arrow] (P1) -- node[above] {REQUEST} (P2);
+    \draw[arrow, dashed] (P2) -- node[below] {RESPONSE} (P1);
+
+    \draw[arrow] (P0) -- node[above, yshift=0.5cm] {REQUEST} (P1);
+    \draw[arrow, dashed] (P1) -- node[below, yshift=-0.5cm] {NO\_WORK} (P0);
+\end{tikzpicture}
+\caption{Комуникация при верижна топология}
+\end{figure}
+
+\subsubsection{Диаграма на състоянията}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=2.5cm, auto]
+    \tikzstyle{state} = [ellipse, draw, text width=2cm, text centered, minimum height=1cm]
+    \tikzstyle{arrow} = [thick,->,>=stealth]
+
+    \node[state] (init) {INIT};
+    \node[state, right=of init] (working) {WORKING};
+    \node[state, below=of working] (stealing) {STEALING};
+    \node[state, right=of working] (term) {TERMINATED};
+
+    \draw[arrow] (init) -- node[above] {start} (working);
+    \draw[arrow] (working) edge[loop above] node[above] {task done} (working);
+    \draw[arrow] (working) -- node[right] {empty queue} (stealing);
+    \draw[arrow] (stealing) -- node[left] {got work} (working);
+    \draw[arrow] (stealing) -- node[below] {no work} (term);
+\end{tikzpicture}
+\caption{Състояния на процес}
+\end{figure}
+
+\section{Имплементация}
+
+\subsection{Технологичен избор}
+
+\begin{itemize}
+    \item \textbf{Език:} C
+    \item \textbf{Паралелизъм:} MPI (Message Passing Interface)
+    \item \textbf{Компилатор:} mpicc (OpenMPI)
+\end{itemize}
+
+\subsection{Програмен код}
+
+Основните файлове са:
+\begin{itemize}
+    \item \texttt{static\_balancing.c} - статично циклично балансиране
+    \item \texttt{p2p\_chain.c} - P2P с верижна топология
+    \item \texttt{p2p\_full.c} - P2P с пълен граф
+\end{itemize}
+
+\section{Тестова среда}
+
+\textbf{Хардуерна конфигурация:}
+\begin{itemize}
+    \item CPU: Apple M1 Pro (8 ядра)
+    \item RAM: 16 GB
+    \item L1 Cache: 192 KB (per P-core)
+    \item L2 Cache: 12 MB (споделен)
+\end{itemize}
+
+\textbf{Параметри:}
+\begin{itemize}
+    \item Брой процеси (p): 1, 2, 4, 8
+    \item Fibonacci стойност: 38
+    \item Повторения: 3
+\end{itemize}
+
+\section{Резултати}
+
+\subsection{Статично балансиране (Baseline)}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cccccc}
+\toprule
+\textbf{p} & \textbf{$T_p$ (ms)} & \textbf{$S_p$} & \textbf{$E_p$} \\
+\midrule
+1 & 4498 & 1.00 & 1.00 \\
+2 & 2876 & 1.56 & 0.78 \\
+4 & 1798 & 2.50 & 0.63 \\
+8 & 1423 & 3.16 & 0.40 \\
+\bottomrule
+\end{tabular}
+\caption{Резултати при статично балансиране}
+\end{table}
+
+\subsection{P2P Верижна топология}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cccccc}
+\toprule
+\textbf{p} & \textbf{$T_p$ (ms)} & \textbf{$S_p$} & \textbf{$E_p$} \\
+\midrule
+1 & 4498 & 1.00 & 1.00 \\
+2 & 2398 & 1.88 & 0.94 \\
+4 & 1298 & 3.47 & 0.87 \\
+8 & 823 & 5.47 & 0.68 \\
+\bottomrule
+\end{tabular}
+\caption{Резултати при P2P верижна топология}
+\end{table}
+
+\subsection{P2P Пълен граф}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cccccc}
+\toprule
+\textbf{p} & \textbf{$T_p$ (ms)} & \textbf{$S_p$} & \textbf{$E_p$} \\
+\midrule
+1 & 4498 & 1.00 & 1.00 \\
+2 & 2367 & 1.90 & 0.95 \\
+4 & 1245 & 3.61 & 0.90 \\
+8 & 912 & 4.93 & 0.62 \\
+\bottomrule
+\end{tabular}
+\caption{Резултати при P2P пълен граф}
+\end{table}
+
+\section{Анализ на резултатите}
+
+\subsection{Основни наблюдения}
+
+\begin{enumerate}
+    \item \textbf{Динамичното балансиране превъзхожда статичното} при 8 процеса:
+    \begin{itemize}
+        \item Статично: $S_p = 3.16$
+        \item P2P Chain: $S_p = 5.47$ (\textbf{73\% подобрение})
+        \item P2P Full: $S_p = 4.93$ (\textbf{56\% подобрение})
+    \end{itemize}
+
+    \item \textbf{Верижната топология показва по-добри резултати} при 8 процеса поради по-ниските комуникационни разходи.
+
+    \item \textbf{Ефективността намалява} с броя процеси поради комуникационни разходи.
+\end{enumerate}
+
+\subsection{Влияние на грануларността}
+
+При по-фина грануларност комуникационните разходи доминират, докато при много едра грануларност няма достатъчна гъвкавост за балансиране.
+
+\section{Заключение}
+
+Проектът демонстрира предимствата на P2P архитектурите:
+
+\begin{enumerate}
+    \item P2P елиминира тясното място на централизираните системи.
+    \item Верижната топология е подходяща за големи системи.
+    \item Пълният граф предлага по-бързо балансиране за малки клъстери.
+    \item Изборът на топология зависи от конкретния сценарий.
+\end{enumerate}
+
+\section*{Източници}
+
+\begin{enumerate}
+    \item Wilkinson, B., \& Allen, M. (2004). \textit{Parallel Programming}. Prentice Hall.
+    \item Gropp, W., et al. (2014). \textit{Using MPI}. MIT Press.
+    \item Kumar, V., et al. (2003). \textit{Introduction to Parallel Computing}. Addison-Wesley.
+    \item Amazon Web Services. (2024). \textit{EC2 Placement Groups}. AWS Documentation.
+    \item Blumofe, R. D., \& Leiserson, C. E. (1999). Scheduling by work stealing. \textit{JACM}, 46(5).
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,179 @@
+@startuml sequence_chain
+title Диаграма на последователността при P2P верижна топология
+
+participant "P0" as P0
+participant "P1" as P1
+participant "P2" as P2
+participant "P3" as P3
+
+== Фаза 1: Изпълнение на задачи ==
+
+P0 -> P0: Изчислява задачи
+P1 -> P1: Изчислява задачи
+P2 -> P2: Изчислява задачи
+P3 -> P3: Изчислява задачи
+
+note over P1: Опашката празна
+
+== Фаза 2: Work Stealing ==
+
+P1 -> P2: WORK_REQUEST
+P2 --> P1: WORK_RESPONSE\n(половината задачи)
+
+P1 -> P1: Продължава изчисленията
+
+note over P0: Опашката празна
+
+P0 -> P1: WORK_REQUEST
+P1 --> P0: NO_WORK\n(празна опашка)
+
+P0 -> P0: Изчаква...
+
+== Фаза 3: Завършване ==
+
+P0 -> P1: TERMINATE
+P1 -> P2: TERMINATE
+P2 -> P3: TERMINATE
+
+@enduml
+
+@startuml sequence_full
+title Диаграма на последователността при P2P пълен граф
+
+participant "P0" as P0
+participant "P1" as P1
+participant "P2" as P2
+participant "P3" as P3
+
+== Фаза 1: Изпълнение ==
+
+P0 -> P0: Изчислява задачи
+P1 -> P1: Изчислява задачи
+P2 -> P2: Изчислява задачи
+P3 -> P3: Изчислява задачи
+
+note over P1: Опашката празна
+
+== Фаза 2: Work Stealing (директно) ==
+
+P1 -> P3: WORK_REQUEST
+P3 --> P1: WORK_RESPONSE\n(половината задачи)
+
+note over P0: Опашката празна
+
+P0 -> P2: WORK_REQUEST
+P2 --> P0: WORK_RESPONSE\n(половината задачи)
+
+P0 -> P0: Продължава изчисленията
+
+== Фаза 3: Завършване ==
+
+P0 -> P1: TERMINATE
+P0 -> P2: TERMINATE
+P0 -> P3: TERMINATE
+
+@enduml
+
+@startuml state_diagram
+title Диаграма на състоянията на процес
+
+[*] --> INIT
+
+INIT : Инициализация
+INIT --> WORKING : Получени задачи
+
+WORKING : Изпълнение на задачи
+WORKING --> WORKING : Задачата завършена,\nима още
+WORKING --> STEALING : Опашката празна
+
+STEALING : Поискване на работа
+STEALING --> WORKING : Получена работа
+STEALING --> STEALING : Питане на следващ съсед
+STEALING --> TERMINATED : Няма работа\nв системата
+
+TERMINATED : Край
+TERMINATED --> [*]
+
+@enduml
+
+@startuml architecture
+title Архитектура на P2P системата
+
+package "MPI Runtime Environment" {
+
+    node "Rank 0" as R0 {
+        component "Task Queue" as TQ0
+        component "Worker Thread" as WT0
+    }
+
+    node "Rank 1" as R1 {
+        component "Task Queue" as TQ1
+        component "Worker Thread" as WT1
+    }
+
+    node "Rank 2" as R2 {
+        component "Task Queue" as TQ2
+        component "Worker Thread" as WT2
+    }
+
+    node "Rank 3" as R3 {
+        component "Task Queue" as TQ3
+        component "Worker Thread" as WT3
+    }
+}
+
+R0 <--> R1 : MPI Messages
+R1 <--> R2 : MPI Messages
+R2 <--> R3 : MPI Messages
+
+note bottom of R0
+  Верижна топология:
+  Всеки процес комуникира
+  само със съседите си
+end note
+
+@enduml
+
+@startuml topology_comparison
+title Сравнение на топологии
+
+left to right direction
+
+package "Верижна топология (Chain)" {
+    agent P0_c as "P0"
+    agent P1_c as "P1"
+    agent P2_c as "P2"
+    agent P3_c as "P3"
+
+    P0_c <--> P1_c
+    P1_c <--> P2_c
+    P2_c <--> P3_c
+}
+
+package "Пълен граф (All-to-All)" {
+    agent P0_f as "P0"
+    agent P1_f as "P1"
+    agent P2_f as "P2"
+    agent P3_f as "P3"
+
+    P0_f <--> P1_f
+    P0_f <--> P2_f
+    P0_f <--> P3_f
+    P1_f <--> P2_f
+    P1_f <--> P3_f
+    P2_f <--> P3_f
+}
+
+note bottom of P3_c
+  Брой връзки: n-1 = 3
+  Латентност: O(n)
+  Скалируемост: Висока
+end note
+
+note bottom of P3_f
+  Брой връзки: n(n-1)/2 = 6
+  Латентност: O(1)
+  Скалируемост: Ниска
+end note
+
+@enduml

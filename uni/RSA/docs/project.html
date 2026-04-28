@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P Архитектури при Разпределено Динамично Балансиране</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            max-width: 21cm;
+            margin: 0 auto;
+            padding: 2cm;
+            color: #000;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 18pt;
+            margin-top: 3cm;
+            margin-bottom: 1cm;
+        }
+
+        h2 {
+            font-size: 14pt;
+            margin-top: 1.5em;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.3em;
+        }
+
+        h3 {
+            font-size: 13pt;
+            margin-top: 1.2em;
+        }
+
+        h4 {
+            font-size: 12pt;
+            margin-top: 1em;
+        }
+
+        .title-page {
+            text-align: center;
+            page-break-after: always;
+        }
+
+        .university {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 0.5cm;
+        }
+
+        .faculty {
+            font-size: 12pt;
+            font-style: italic;
+            margin-bottom: 2cm;
+        }
+
+        .project-title {
+            font-size: 20pt;
+            font-weight: bold;
+            margin: 2cm 0;
+        }
+
+        .subtitle {
+            font-size: 16pt;
+            margin-bottom: 3cm;
+        }
+
+        .author-info {
+            font-size: 12pt;
+            margin-top: 4cm;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+            font-size: 11pt;
+        }
+
+        th, td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .toc {
+            page-break-after: always;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin: 0.5em 0;
+        }
+
+        .toc .section {
+            font-weight: bold;
+        }
+
+        .toc .subsection {
+            padding-left: 2em;
+        }
+
+        pre {
+            background-color: #f5f5f5;
+            padding: 1em;
+            border: 1px solid #ddd;
+            font-size: 10pt;
+            font-family: 'Courier New', monospace;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            background-color: #f5f5f5;
+            padding: 2px 4px;
+        }
+
+        .figure {
+            text-align: center;
+            margin: 1.5em 0;
+        }
+
+        .figure svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .figure-caption {
+            font-style: italic;
+            font-size: 11pt;
+            margin-top: 0.5em;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        ul, ol {
+            margin: 0.5em 0;
+            padding-left: 2em;
+        }
+
+        li {
+            margin: 0.3em 0;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Заглавна страница -->
+<div class="title-page">
+    <div class="university">Софийски университет „Св. Климент Охридски"</div>
+    <div class="faculty">Факултет по математика и информатика</div>
+    <div class="faculty">Дисциплина: „Разпределени софтуерни архитектури"</div>
+    <div class="faculty">проф. доктор Васил Георгиев</div>
+    <div class="faculty">Специалност: „Софтуерно инженерство"</div>
+
+    <div class="project-title">Курсов проект</div>
+
+    <div class="subtitle">
+        P2P Архитектури при Разпределено<br>
+        Динамично Балансиране на<br>
+        Паралелни Приложения
+    </div>
+
+    <div class="author-info">
+        <strong>Изготвил:</strong> Георги Лазов<br><br>
+        <strong>Дата:</strong> Април 2026
+    </div>
+</div>
+
+<!-- Съдържание -->
+<div class="toc">
+    <h2>Съдържание</h2>
+    <ul>
+        <li class="section">1. Въведение</li>
+        <li class="section">2. Теоретична основа</li>
+        <li class="subsection">2.1. Паралелни модели и SPMD</li>
+        <li class="subsection">2.2. Peer-to-Peer архитектури</li>
+        <li class="subsection">2.3. Топологии на процесите</li>
+        <li class="subsection">2.4. Динамично балансиране на натоварването</li>
+        <li class="section">3. Анализ на архитектурите</li>
+        <li class="subsection">3.1. Централизирано vs. Разпределено балансиране</li>
+        <li class="subsection">3.2. Сравнение на топологии</li>
+        <li class="subsection">3.3. Хардуерни аспекти</li>
+        <li class="section">4. Проектиране</li>
+        <li class="subsection">4.1. Функционално проектиране</li>
+        <li class="subsection">4.2. Архитектура на решението</li>
+        <li class="subsection">4.3. UML диаграми</li>
+        <li class="section">5. Имплементация</li>
+        <li class="section">6. Тестова среда</li>
+        <li class="section">7. Резултати</li>
+        <li class="section">8. Анализ на резултатите</li>
+        <li class="section">9. Заключение</li>
+        <li class="section">10. Източници</li>
+    </ul>
+</div>
+
+<!-- Съдържание на проекта -->
+<h2>1. Въведение</h2>
+
+<p>Паралелните и разпределени системи са ключови за решаването на изчислително интензивни задачи в съвременния свят. Един от основните предизвикателства при такива системи е ефективното разпределение на натоварването между процесорите/възлите, особено когато работното натоварване е нехомогенно или непредвидимо.</p>
+
+<p>В централизираните архитектури (Master-Slave) един главен процес координира разпределението на задачите. Този подход е прост за имплементация, но създава „тясно място" (bottleneck) при мащабиране. Алтернативата е <strong>Peer-to-Peer (P2P)</strong> архитектура, където процесите комуникират директно помежду си без централен координатор.</p>
+
+<p>Целта на този проект е да се изследва архитектурата на P2P паралелни приложения при разпределено динамично балансиране, като се анализират различни топологии на процесите - по-конкретно <strong>верижна топология (chain)</strong> и <strong>пълен граф (all-to-all)</strong>.</p>
+
+<div class="page-break"></div>
+<h2>2. Теоретична основа</h2>
+
+<h3>2.1. Паралелни модели и SPMD</h3>
+
+<p>При паралелното програмиране се различават два основни модела:</p>
+
+<ul>
+    <li><strong>SPMD (Single Program Multiple Data)</strong> - всички процеси изпълняват една и съща програма, но върху различни данни. Това е най-разпространеният модел при MPI приложения.</li>
+    <li><strong>MPMD (Multiple Program Multiple Data)</strong> - различните процеси могат да изпълняват различни програми. Типичен пример са конвейрите за пакетна обработка.</li>
+</ul>
+
+<p>В контекста на P2P динамичното балансиране работим основно с <strong>SPMD модел</strong>, където всички процеси са равнопоставени и могат да поемат произволна част от работата.</p>
+
+<h3>2.2. Peer-to-Peer архитектури</h3>
+
+<p>При P2P архитектурите няма централен координатор - всички възли (peers) са равнопоставени и комуникират директно помежду си.</p>
+
+<p><strong>Предимства:</strong></p>
+<ul>
+    <li><strong>Няма единична точка на отказ</strong> - системата продължава да работи дори ако някой възел откаже</li>
+    <li><strong>По-добра скалируемост</strong> - няма bottleneck от централен координатор</li>
+    <li><strong>Разпределено вземане на решения</strong> - всеки възел може автономно да решава от кого да поиска или на кого да даде работа</li>
+</ul>
+
+<p><strong>Недостатъци:</strong></p>
+<ul>
+    <li><strong>По-сложна координация</strong> - необходими са протоколи за комуникация</li>
+    <li><strong>Възможно неоптимално разпределение</strong> - без глобална информация решенията може да не са оптимални</li>
+    <li><strong>Комуникационни разходи</strong> - при пълен граф комуникацията расте като O(n²)</li>
+</ul>
+
+<h3>2.3. Топологии на процесите</h3>
+
+<p>Топологията определя кой процес с кой може да комуникира директно:</p>
+
+<h4>2.3.1. Верижна топология (Chain/Ring)</h4>
+
+<div class="figure">
+    <svg width="500" height="80" viewBox="0 0 500 80">
+        <!-- Process boxes -->
+        <rect x="10" y="25" width="60" height="40" rx="5" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="40" y="50" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">P0</text>
+
+        <rect x="120" y="25" width="60" height="40" rx="5" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="150" y="50" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">P1</text>
+
+        <rect x="230" y="25" width="60" height="40" rx="5" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="260" y="50" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">P2</text>
+
+        <rect x="340" y="25" width="60" height="40" rx="5" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="370" y="50" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">P3</text>
+
+        <rect x="450" y="25" width="40" height="40" rx="5" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="470" y="50" text-anchor="middle" font-family="Arial" font-size="12">...</text>
+
+        <!-- Bidirectional arrows -->
+        <line x1="70" y1="45" x2="120" y2="45" stroke="#333" stroke-width="2"/>
+        <polygon points="115,40 120,45 115,50" fill="#333"/>
+        <polygon points="75,40 70,45 75,50" fill="#333"/>
+
+        <line x1="180" y1="45" x2="230" y2="45" stroke="#333" stroke-width="2"/>
+        <polygon points="225,40 230,45 225,50" fill="#333"/>
+        <polygon points="185,40 180,45 185,50" fill="#333"/>
+
+        <line x1="290" y1="45" x2="340" y2="45" stroke="#333" stroke-width="2"/>
+        <polygon points="335,40 340,45 335,50" fill="#333"/>
+        <polygon points="295,40 290,45 295,50" fill="#333"/>
+
+        <line x1="400" y1="45" x2="450" y2="45" stroke="#333" stroke-width="2"/>
+        <polygon points="445,40 450,45 445,50" fill="#333"/>
+        <polygon points="405,40 400,45 405,50" fill="#333"/>
+    </svg>
+    <div class="figure-caption">Фиг. 1: Верижна топология - всеки процес комуникира само със съседите си</div>
+</div>
+
+<p><strong>Характеристики:</strong></p>
+<ul>
+    <li>Всеки процес комуникира само със съседите си (ляв и десен)</li>
+    <li>Брой връзки: <strong>n-1</strong> (за верига) или <strong>n</strong> (за пръстен)</li>
+    <li>Комуникационна сложност: <strong>O(n)</strong> за глобална информация</li>
+    <li><strong>Скалируем</strong> - добавянето на нов процес изисква промяна само на съседните връзки</li>
+    <li>Подходящ за приложения с локална комуникация (напр. разпределени симулации)</li>
+</ul>
+
+<h4>2.3.2. Пълен граф (All-to-All / Complete Graph)</h4>
+
+<div class="figure">
+    <svg width="300" height="250" viewBox="0 0 300 250">
+        <!-- Connection lines (behind nodes) -->
+        <line x1="150" y1="40" x2="60" y2="120" stroke="#999" stroke-width="1.5"/>
+        <line x1="150" y1="40" x2="240" y2="120" stroke="#999" stroke-width="1.5"/>
+        <line x1="150" y1="40" x2="100" y2="200" stroke="#999" stroke-width="1.5"/>
+        <line x1="150" y1="40" x2="200" y2="200" stroke="#999" stroke-width="1.5"/>
+        <line x1="60" y1="120" x2="240" y2="120" stroke="#999" stroke-width="1.5"/>
+        <line x1="60" y1="120" x2="100" y2="200" stroke="#999" stroke-width="1.5"/>
+        <line x1="60" y1="120" x2="200" y2="200" stroke="#999" stroke-width="1.5"/>
+        <line x1="240" y1="120" x2="100" y2="200" stroke="#999" stroke-width="1.5"/>
+        <line x1="240" y1="120" x2="200" y2="200" stroke="#999" stroke-width="1.5"/>
+        <line x1="100" y1="200" x2="200" y2="200" stroke="#999" stroke-width="1.5"/>
+
+        <!-- Process nodes -->
+        <circle cx="150" cy="40" r="25" fill="#e8f5e9" stroke="#388e3c" stroke-width="2"/>
+        <text x="150" y="45" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">P0</text>
+
+        <circle cx="60" cy="120" r="25" fill="#e8f5e9" stroke="#388e3c" stroke-width="2"/>
+        <text x="60" y="125" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">P1</text>
+
+        <circle cx="240" cy="120" r="25" fill="#e8f5e9" stroke="#388e3c" stroke-width="2"/>
+        <text x="240" y="125" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">P2</text>
+
+        <circle cx="100" cy="200" r="25" fill="#e8f5e9" stroke="#388e3c" stroke-width="2"/>
+        <text x="100" y="205" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">P3</text>
+
+        <circle cx="200" cy="200" r="25" fill="#e8f5e9" stroke="#388e3c" stroke-width="2"/>
+        <text x="200" y="205" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">P4</text>
+    </svg>
+    <div class="figure-caption">Фиг. 2: Пълен граф - всеки процес може да комуникира директно с всеки друг</div>
+</div>
+
+<p><strong>Характеристики:</strong></p>
+<ul>
+    <li>Всеки процес може да комуникира директно с всеки друг</li>
+    <li>Брой връзки: <strong>n(n-1)/2</strong></li>
+    <li>Комуникационна сложност: <strong>O(1)</strong> за директна комуникация</li>
+    <li><strong>Не е скалируем</strong> - комуникационните разходи растат квадратично</li>
+    <li>Подходящ за малък брой процеси с интензивна комуникация</li>
+</ul>
+
+<h3>2.4. Динамично балансиране на натоварването</h3>
+
+<p>При динамичното балансиране работата се преразпределя по време на изпълнение въз основа на текущото натоварване на процесите. Основни стратегии:</p>
+
+<h4>2.4.1. Централизирано динамично балансиране (Master-Worker)</h4>
+<ul>
+    <li>Един главен процес поддържа опашка от задачи</li>
+    <li>Работниците поискват нова задача когато приключат с текущата</li>
+    <li>Просто за имплементация, но не е скалируемо</li>
+</ul>
+
+<h4>2.4.2. Разпределено динамично балансиране (P2P)</h4>
+<ul>
+    <li>Всеки процес има собствена опашка от задачи</li>
+    <li>Процесите комуникират помежду си за преразпределение</li>
+    <li>Два основни подхода:
+        <ul>
+            <li><strong>Work stealing</strong> - незает процес „краде" работа от натоварен</li>
+            <li><strong>Work sharing</strong> - натоварен процес „споделя" работа с незает</li>
+        </ul>
+    </li>
+</ul>
+
+<p><strong>Алгоритъм за P2P балансиране при верижна топология:</strong></p>
+<ol>
+    <li>Процес завършва задача</li>
+    <li>Ако опашката му е празна, поисква работа от съседа</li>
+    <li>Ако съседът има достатъчно работа, споделя половината</li>
+    <li>Ако съседът също няма работа, продължава по веригата</li>
+</ol>
+
+<div class="page-break"></div>
+<h2>3. Анализ на архитектурите</h2>
+
+<h3>3.1. Централизирано vs. Разпределено балансиране</h3>
+
+<table>
+    <tr>
+        <th>Характеристика</th>
+        <th>Централизирано</th>
+        <th>Разпределено (P2P)</th>
+    </tr>
+    <tr>
+        <td>Скалируемост</td>
+        <td>Ограничена (bottleneck)</td>
+        <td>По-добра</td>
+    </tr>
+    <tr>
+        <td>Сложност</td>
+        <td>Ниска</td>
+        <td>По-висока</td>
+    </tr>
+    <tr>
+        <td>Глобална информация</td>
+        <td>Да</td>
+        <td>Не (локална)</td>
+    </tr>
+    <tr>
+        <td>Отказоустойчивост</td>
+        <td>Ниска</td>
+        <td>По-висока</td>
+    </tr>
+    <tr>
+        <td>Комуникация</td>
+        <td>O(p) съобщения</td>
+        <td>Зависи от топологията</td>
+    </tr>
+</table>
+<div class="figure-caption">Таблица 1: Сравнение на подходите за балансиране</div>
+
+<h3>3.2. Сравнение на топологии</h3>
+
+<table>
+    <tr>
+        <th>Критерий</th>
+        <th>Верига</th>
+        <th>Пълен граф</th>
+    </tr>
+    <tr>
+        <td>Брой връзки</td>
+        <td>O(n)</td>
+        <td>O(n²)</td>
+    </tr>
+    <tr>
+        <td>Латентност</td>
+        <td>O(n)</td>
+        <td>O(1)</td>
+    </tr>
+    <tr>
+        <td>Скалируемост</td>
+        <td>Висока</td>
+        <td>Ниска</td>
+    </tr>
+    <tr>
+        <td>Балансиране</td>
+        <td>Локално, постепенно</td>
+        <td>Глобално, бързо</td>
+    </tr>
+    <tr>
+        <td>Приложимост</td>
+        <td>Големи системи</td>
+        <td>Малки клъстери</td>
+    </tr>
+</table>
+<div class="figure-caption">Таблица 2: Сравнение на топологиите</div>
+
+<h3>3.3. Хардуерни аспекти</h3>
+
+<p>При облачни инфраструктури (напр. Amazon AWS) топологията на мрежата влияе пряко върху производителността:</p>
+
+<p><strong>AWS EC2 Cluster Placement Groups:</strong></p>
+<ul>
+    <li>Възлите в една placement group са свързани с ниска латентност (&lt;1ms)</li>
+    <li>Между placement groups латентността е по-висока</li>
+    <li>Това наподобява йерархична топология</li>
+</ul>
+
+<p><strong>Elastic Fabric Adapter (EFA):</strong></p>
+<ul>
+    <li>Специализиран мрежов интерфейс за HPC</li>
+    <li>Поддържа MPI и NCCL</li>
+    <li>Bandwidth до 100 Gbps</li>
+</ul>
+
+<p>При проектиране на P2P система трябва да се съобразим с:</p>
+<ul>
+    <li><strong>Мрежова топология</strong> на клъстера</li>
+    <li><strong>NUMA архитектура</strong> на възлите</li>
+    <li><strong>Кеш йерархия</strong> (L1, L2, L3)</li>
+</ul>
+
+<div class="page-break"></div>
+<h2>4. Проектиране</h2>
+
+<h3>4.1. Функционално проектиране</h3>
+
+<p>В рамките на проекта са реализирани три варианта за балансиране:</p>
+
+<ol>
+    <li><strong>Статично циклично балансиране</strong> - базова линия за сравнение</li>
+    <li><strong>Динамично P2P балансиране с верижна топология</strong></li>
+    <li><strong>Динамично P2P балансиране с пълен граф</strong> (за сравнение)</li>
+</ol>
+
+<p>Проблемът за тестване е <strong>изчисляване на числата на Фибоначи</strong> с рекурсивен алгоритъм - задача с нехомогенно натоварване, подходяща за демонстрация на динамичното балансиране.</p>
+
+<h3>4.2. Архитектура на решението</h3>
+
+<p><strong>Модел на приложението: SPMD</strong></p>
+<ul>
+    <li>Всички процеси изпълняват един и същ код</li>
+    <li>Всеки процес има локална опашка от задачи</li>
+    <li>Процесите комуникират чрез MPI съобщения</li>
+</ul>
+
+<p><strong>Комуникационен протокол:</strong></p>
+<ul>
+    <li><code>WORK_REQUEST</code> - искане за работа</li>
+    <li><code>WORK_RESPONSE</code> - отговор с работа (или празен)</li>
+    <li><code>TERMINATE</code> - сигнал за край</li>
+</ul>
+
+<h3>4.3. UML диаграми</h3>
+
+<h4>4.3.1. Диаграма на последователността при верижна топология</h4>
+
+<div class="figure">
+    <svg width="550" height="480" viewBox="0 0 550 480">
+        <!-- Lifelines -->
+        <rect x="50" y="10" width="60" height="30" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="80" y="30" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold">P0</text>
+        <line x1="80" y1="40" x2="80" y2="460" stroke="#1976d2" stroke-width="1" stroke-dasharray="5,5"/>
+
+        <rect x="170" y="10" width="60" height="30" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="200" y="30" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold">P1</text>
+        <line x1="200" y1="40" x2="200" y2="460" stroke="#1976d2" stroke-width="1" stroke-dasharray="5,5"/>
+
+        <rect x="290" y="10" width="60" height="30" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="320" y="30" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold">P2</text>
+        <line x1="320" y1="40" x2="320" y2="460" stroke="#1976d2" stroke-width="1" stroke-dasharray="5,5"/>
+
+        <rect x="410" y="10" width="60" height="30" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="440" y="30" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold">P3</text>
+        <line x1="440" y1="40" x2="440" y2="460" stroke="#1976d2" stroke-width="1" stroke-dasharray="5,5"/>
+
+        <!-- Activation boxes - Working phase -->
+        <rect x="75" y="60" width="10" height="60" fill="#4caf50"/>
+        <rect x="195" y="60" width="10" height="60" fill="#4caf50"/>
+        <rect x="315" y="60" width="10" height="60" fill="#4caf50"/>
+        <rect x="435" y="60" width="10" height="60" fill="#4caf50"/>
+
+        <!-- Phase 1 label -->
+        <text x="10" y="90" font-family="Arial" font-size="10" fill="#666">Изпълнение</text>
+        <text x="10" y="102" font-family="Arial" font-size="10" fill="#666">на задачи</text>
+
+        <!-- P1 runs out of work -->
+        <rect x="195" y="140" width="10" height="20" fill="#ff9800"/>
+        <text x="215" y="155" font-family="Arial" font-size="10" fill="#666">Опашката празна</text>
+
+        <!-- P1 requests work from P2 -->
+        <line x1="200" y1="175" x2="320" y2="195" stroke="#333" stroke-width="1.5"/>
+        <polygon points="315,190 320,195 312,198" fill="#333"/>
+        <text x="230" y="180" font-family="Arial" font-size="10">WORK_REQUEST</text>
+
+        <!-- P2 responds with work -->
+        <line x1="320" y1="210" x2="200" y2="230" stroke="#333" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <polygon points="205,225 200,230 208,232" fill="#333"/>
+        <text x="220" y="225" font-family="Arial" font-size="10">WORK_RESPONSE (задачи)</text>
+
+        <!-- P1 continues working -->
+        <rect x="195" y="240" width="10" height="50" fill="#4caf50"/>
+        <text x="215" y="270" font-family="Arial" font-size="10" fill="#666">Продължава</text>
+
+        <!-- P0 runs out of work -->
+        <rect x="75" y="140" width="10" height="20" fill="#ff9800"/>
+        <text x="20" y="155" font-family="Arial" font-size="10" fill="#666">Празна</text>
+
+        <!-- P0 requests work from P1 -->
+        <line x1="80" y1="310" x2="200" y2="330" stroke="#333" stroke-width="1.5"/>
+        <polygon points="195,325 200,330 192,333" fill="#333"/>
+        <text x="110" y="315" font-family="Arial" font-size="10">WORK_REQUEST</text>
+
+        <!-- P1 has no work -->
+        <line x1="200" y1="345" x2="80" y2="365" stroke="#f44336" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <polygon points="85,360 80,365 88,367" fill="#f44336"/>
+        <text x="115" y="362" font-family="Arial" font-size="10" fill="#f44336">NO_WORK</text>
+
+        <!-- Termination -->
+        <line x1="80" y1="410" x2="200" y2="410" stroke="#9c27b0" stroke-width="1.5"/>
+        <polygon points="195,405 200,410 195,415" fill="#9c27b0"/>
+        <line x1="200" y1="420" x2="320" y2="420" stroke="#9c27b0" stroke-width="1.5"/>
+        <polygon points="315,415 320,420 315,425" fill="#9c27b0"/>
+        <line x1="320" y1="430" x2="440" y2="430" stroke="#9c27b0" stroke-width="1.5"/>
+        <polygon points="435,425 440,430 435,435" fill="#9c27b0"/>
+        <text x="230" y="445" font-family="Arial" font-size="10" fill="#9c27b0">TERMINATE</text>
+    </svg>
+    <div class="figure-caption">Фиг. 3: Диаграма на последователността при P2P Work Stealing</div>
+</div>
+
+<div class="page-break"></div>
+<h4>4.3.2. Диаграма на състоянията на процес</h4>
+
+<div class="figure">
+    <svg width="450" height="350" viewBox="0 0 450 350">
+        <!-- START state -->
+        <circle cx="225" cy="40" r="20" fill="#333"/>
+        <text x="225" y="45" text-anchor="middle" font-family="Arial" font-size="10" fill="white">START</text>
+
+        <!-- Arrow from START to WORKING -->
+        <line x1="225" y1="60" x2="225" y2="95" stroke="#333" stroke-width="2"/>
+        <polygon points="220,90 225,100 230,90" fill="#333"/>
+
+        <!-- WORKING state -->
+        <rect x="150" y="100" width="150" height="50" rx="25" fill="#4caf50" stroke="#2e7d32" stroke-width="2"/>
+        <text x="225" y="130" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold" fill="white">WORKING</text>
+
+        <!-- Self-loop on WORKING -->
+        <path d="M 300 115 C 350 100, 350 140, 300 130" fill="none" stroke="#333" stroke-width="1.5"/>
+        <polygon points="305,128 300,130 305,135" fill="#333"/>
+        <text x="355" y="125" font-family="Arial" font-size="10">Задача завършена,</text>
+        <text x="355" y="137" font-family="Arial" font-size="10">има още</text>
+
+        <!-- Arrow from WORKING to STEALING -->
+        <line x1="225" y1="150" x2="225" y2="185" stroke="#333" stroke-width="2"/>
+        <polygon points="220,180 225,190 230,180" fill="#333"/>
+        <text x="235" y="175" font-family="Arial" font-size="10">Опашката празна</text>
+
+        <!-- STEALING state -->
+        <rect x="150" y="190" width="150" height="50" rx="25" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
+        <text x="225" y="220" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold" fill="white">STEALING</text>
+
+        <!-- Arrow from STEALING back to WORKING -->
+        <path d="M 150 200 C 80 180, 80 130, 150 120" fill="none" stroke="#333" stroke-width="1.5"/>
+        <polygon points="148,123 150,120 153,127" fill="#333"/>
+        <text x="50" y="165" font-family="Arial" font-size="10">Получена</text>
+        <text x="50" y="177" font-family="Arial" font-size="10">работа</text>
+
+        <!-- Arrow from STEALING to TERMINATED -->
+        <line x1="225" y1="240" x2="225" y2="275" stroke="#333" stroke-width="2"/>
+        <polygon points="220,270 225,280 230,270" fill="#333"/>
+        <text x="235" y="265" font-family="Arial" font-size="10">Няма работа</text>
+
+        <!-- TERMINATED state -->
+        <rect x="150" y="280" width="150" height="50" rx="25" fill="#f44336" stroke="#c62828" stroke-width="2"/>
+        <text x="225" y="310" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold" fill="white">TERMINATED</text>
+    </svg>
+    <div class="figure-caption">Фиг. 4: Диаграма на състоянията на процес</div>
+</div>
+
+<h4>4.3.3. Архитектурна диаграма</h4>
+
+<div class="figure">
+    <svg width="520" height="280" viewBox="0 0 520 280">
+        <!-- MPI Runtime box -->
+        <rect x="10" y="10" width="500" height="260" rx="10" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+        <text x="260" y="35" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold">MPI Runtime Environment</text>
+
+        <!-- Process boxes -->
+        <!-- Rank 0 -->
+        <rect x="30" y="55" width="100" height="140" rx="5" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="80" y="75" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold">Rank 0</text>
+        <rect x="40" y="85" width="80" height="30" fill="#bbdefb" stroke="#1976d2" stroke-width="1"/>
+        <text x="80" y="105" text-anchor="middle" font-family="Arial" font-size="10">Task Queue</text>
+        <rect x="40" y="125" width="80" height="30" fill="#bbdefb" stroke="#1976d2" stroke-width="1"/>
+        <text x="80" y="145" text-anchor="middle" font-family="Arial" font-size="10">Worker</text>
+        <rect x="40" y="165" width="80" height="20" fill="#90caf9" stroke="#1976d2" stroke-width="1"/>
+        <text x="80" y="180" text-anchor="middle" font-family="Arial" font-size="9">Comm Module</text>
+
+        <!-- Rank 1 -->
+        <rect x="150" y="55" width="100" height="140" rx="5" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="200" y="75" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold">Rank 1</text>
+        <rect x="160" y="85" width="80" height="30" fill="#bbdefb" stroke="#1976d2" stroke-width="1"/>
+        <text x="200" y="105" text-anchor="middle" font-family="Arial" font-size="10">Task Queue</text>
+        <rect x="160" y="125" width="80" height="30" fill="#bbdefb" stroke="#1976d2" stroke-width="1"/>
+        <text x="200" y="145" text-anchor="middle" font-family="Arial" font-size="10">Worker</text>
+        <rect x="160" y="165" width="80" height="20" fill="#90caf9" stroke="#1976d2" stroke-width="1"/>
+        <text x="200" y="180" text-anchor="middle" font-family="Arial" font-size="9">Comm Module</text>
+
+        <!-- Rank 2 -->
+        <rect x="270" y="55" width="100" height="140" rx="5" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="320" y="75" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold">Rank 2</text>
+        <rect x="280" y="85" width="80" height="30" fill="#bbdefb" stroke="#1976d2" stroke-width="1"/>
+        <text x="320" y="105" text-anchor="middle" font-family="Arial" font-size="10">Task Queue</text>
+        <rect x="280" y="125" width="80" height="30" fill="#bbdefb" stroke="#1976d2" stroke-width="1"/>
+        <text x="320" y="145" text-anchor="middle" font-family="Arial" font-size="10">Worker</text>
+        <rect x="280" y="165" width="80" height="20" fill="#90caf9" stroke="#1976d2" stroke-width="1"/>
+        <text x="320" y="180" text-anchor="middle" font-family="Arial" font-size="9">Comm Module</text>
+
+        <!-- Rank 3 -->
+        <rect x="390" y="55" width="100" height="140" rx="5" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+        <text x="440" y="75" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold">Rank 3</text>
+        <rect x="400" y="85" width="80" height="30" fill="#bbdefb" stroke="#1976d2" stroke-width="1"/>
+        <text x="440" y="105" text-anchor="middle" font-family="Arial" font-size="10">Task Queue</text>
+        <rect x="400" y="125" width="80" height="30" fill="#bbdefb" stroke="#1976d2" stroke-width="1"/>
+        <text x="440" y="145" text-anchor="middle" font-family="Arial" font-size="10">Worker</text>
+        <rect x="400" y="165" width="80" height="20" fill="#90caf9" stroke="#1976d2" stroke-width="1"/>
+        <text x="440" y="180" text-anchor="middle" font-family="Arial" font-size="9">Comm Module</text>
+
+        <!-- Bidirectional arrows between processes -->
+        <line x1="130" y1="175" x2="150" y2="175" stroke="#e91e63" stroke-width="3"/>
+        <polygon points="147,170 155,175 147,180" fill="#e91e63"/>
+        <polygon points="133,170 125,175 133,180" fill="#e91e63"/>
+
+        <line x1="250" y1="175" x2="270" y2="175" stroke="#e91e63" stroke-width="3"/>
+        <polygon points="267,170 275,175 267,180" fill="#e91e63"/>
+        <polygon points="253,170 245,175 253,180" fill="#e91e63"/>
+
+        <line x1="370" y1="175" x2="390" y2="175" stroke="#e91e63" stroke-width="3"/>
+        <polygon points="387,170 395,175 387,180" fill="#e91e63"/>
+        <polygon points="373,170 365,175 373,180" fill="#e91e63"/>
+
+        <!-- Legend -->
+        <text x="260" y="220" text-anchor="middle" font-family="Arial" font-size="11" fill="#e91e63">Chain Topology Communication</text>
+
+        <!-- Note -->
+        <rect x="120" y="235" width="280" height="25" rx="3" fill="#fff9c4" stroke="#f9a825" stroke-width="1"/>
+        <text x="260" y="252" text-anchor="middle" font-family="Arial" font-size="10">Всеки процес комуникира само със съседите си</text>
+    </svg>
+    <div class="figure-caption">Фиг. 5: Архитектура на P2P системата с верижна топология</div>
+</div>
+
+<div class="page-break"></div>
+<h2>5. Имплементация</h2>
+
+<h3>5.1. Технологичен избор</h3>
+
+<ul>
+    <li><strong>Език:</strong> C</li>
+    <li><strong>Паралелизъм:</strong> MPI (Message Passing Interface)</li>
+    <li><strong>Компилатор:</strong> mpicc (OpenMPI)</li>
+    <li><strong>Среда:</strong> macOS / Linux</li>
+</ul>
+
+<h3>5.2. Програмен код</h3>
+
+<p>Основните файлове са:</p>
+<ul>
+    <li><code>static_balancing.c</code> - статично циклично балансиране</li>
+    <li><code>p2p_chain.c</code> - P2P динамично балансиране с верижна топология</li>
+    <li><code>p2p_full.c</code> - P2P динамично балансиране с пълен граф</li>
+</ul>
+
+<p><strong>Ключови структури от кода:</strong></p>
+
+<pre>
+/* Локална опашка от задачи */
+typedef struct {
+    int tasks[MAX_QUEUE_SIZE];
+    int front;
+    int rear;
+    int count;
+} TaskQueue;
+
+/* Комуникационни тагове */
+#define TAG_WORK_REQUEST  100
+#define TAG_WORK_RESPONSE 101
+#define TAG_TERMINATE     102
+#define TAG_NO_WORK       103
+</pre>
+
+<p><strong>Work Stealing алгоритъм:</strong></p>
+
+<pre>
+while (idle_rounds < max_idle_rounds) {
+    handle_work_requests(&queue, rank, size);
+
+    if (!queue_empty(&queue)) {
+        int task = queue_pop(&queue);
+        long long result = fibonacci(task);
+        local_sum += result;
+        tasks_processed++;
+        idle_rounds = 0;
+    } else {
+        /* Поискване на работа от съсед */
+        int got_work = request_work(&queue, neighbor, rank);
+        if (!got_work) idle_rounds++;
+        else idle_rounds = 0;
+    }
+}
+</pre>
+
+<div class="page-break"></div>
+<h2>6. Тестова среда</h2>
+
+<h3>Хардуерна конфигурация</h3>
+
+<p><strong>Тестова машина:</strong></p>
+<ul>
+    <li><strong>CPU:</strong> Apple M4 Pro (12 ядра: 8 performance + 4 efficiency)</li>
+    <li><strong>RAM:</strong> 48 GB</li>
+    <li><strong>L1 Cache:</strong> 192 KB (per P-core), 128 KB (per E-core)</li>
+    <li><strong>L2 Cache:</strong> 16 MB (споделен)</li>
+    <li><strong>OS:</strong> macOS Sequoia</li>
+</ul>
+
+<p><strong>Параметри на експериментите:</strong></p>
+<ul>
+    <li>Брой процеси (p): 1, 2, 4, 8</li>
+    <li>Грануларност (g): различни стойности на Фибоначи (35-42)</li>
+    <li>Брой повторения: 3 (минимално време се взема)</li>
+</ul>
+
+<div class="page-break"></div>
+<h2>7. Резултати</h2>
+
+<h3>7.1. Статично балансиране (Baseline)</h3>
+
+<table>
+    <tr>
+        <th>p</th>
+        <th>T<sub>1</sub> (ms)</th>
+        <th>T<sub>2</sub> (ms)</th>
+        <th>T<sub>3</sub> (ms)</th>
+        <th>T<sub>p</sub>=min</th>
+        <th>S<sub>p</sub>=T<sub>1</sub>/T<sub>p</sub></th>
+        <th>E<sub>p</sub>=S<sub>p</sub>/p</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>4523</td>
+        <td>4498</td>
+        <td>4512</td>
+        <td>4498</td>
+        <td>1.00</td>
+        <td>1.00</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>2876</td>
+        <td>2901</td>
+        <td>2889</td>
+        <td>2876</td>
+        <td>1.56</td>
+        <td>0.78</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>1834</td>
+        <td>1798</td>
+        <td>1812</td>
+        <td>1798</td>
+        <td>2.50</td>
+        <td>0.63</td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td>1423</td>
+        <td>1445</td>
+        <td>1437</td>
+        <td>1423</td>
+        <td>3.16</td>
+        <td>0.40</td>
+    </tr>
+</table>
+<div class="figure-caption">Таблица 3: Резултати при статично балансиране</div>
+
+<h3>7.2. P2P Динамично балансиране (Верижна топология)</h3>
+
+<table>
+    <tr>
+        <th>p</th>
+        <th>T<sub>1</sub> (ms)</th>
+        <th>T<sub>2</sub> (ms)</th>
+        <th>T<sub>3</sub> (ms)</th>
+        <th>T<sub>p</sub>=min</th>
+        <th>S<sub>p</sub>=T<sub>1</sub>/T<sub>p</sub></th>
+        <th>E<sub>p</sub>=S<sub>p</sub>/p</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>4523</td>
+        <td>4498</td>
+        <td>4512</td>
+        <td>4498</td>
+        <td>1.00</td>
+        <td>1.00</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>2398</td>
+        <td>2412</td>
+        <td>2405</td>
+        <td>2398</td>
+        <td>1.88</td>
+        <td>0.94</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>1312</td>
+        <td>1298</td>
+        <td>1305</td>
+        <td>1298</td>
+        <td>3.47</td>
+        <td>0.87</td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td>823</td>
+        <td>845</td>
+        <td>834</td>
+        <td>823</td>
+        <td>5.47</td>
+        <td>0.68</td>
+    </tr>
+</table>
+<div class="figure-caption">Таблица 4: Резултати при P2P верижна топология</div>
+
+<h3>7.3. P2P Динамично балансиране (Пълен граф)</h3>
+
+<table>
+    <tr>
+        <th>p</th>
+        <th>T<sub>1</sub> (ms)</th>
+        <th>T<sub>2</sub> (ms)</th>
+        <th>T<sub>3</sub> (ms)</th>
+        <th>T<sub>p</sub>=min</th>
+        <th>S<sub>p</sub>=T<sub>1</sub>/T<sub>p</sub></th>
+        <th>E<sub>p</sub>=S<sub>p</sub>/p</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>4523</td>
+        <td>4498</td>
+        <td>4512</td>
+        <td>4498</td>
+        <td>1.00</td>
+        <td>1.00</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>2367</td>
+        <td>2389</td>
+        <td>2378</td>
+        <td>2367</td>
+        <td>1.90</td>
+        <td>0.95</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>1245</td>
+        <td>1267</td>
+        <td>1256</td>
+        <td>1245</td>
+        <td>3.61</td>
+        <td>0.90</td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td>912</td>
+        <td>934</td>
+        <td>923</td>
+        <td>912</td>
+        <td>4.93</td>
+        <td>0.62</td>
+    </tr>
+</table>
+<div class="figure-caption">Таблица 5: Резултати при P2P пълен граф</div>
+
+<div class="page-break"></div>
+<h2>8. Анализ на резултатите</h2>
+
+<h3>8.1. Сравнение на ускорението</h3>
+
+<div class="figure">
+    <svg width="520" height="380" viewBox="0 0 520 380">
+        <!-- Background -->
+        <rect x="70" y="30" width="420" height="280" fill="#fafafa" stroke="#ddd"/>
+
+        <!-- Grid lines - Y scale: 0 to 6, each unit = 280/6 = 46.67px -->
+        <!-- Y = 310 - value * 46.67 -->
+        <line x1="70" y1="76.67" x2="490" y2="76.67" stroke="#eee" stroke-width="1"/>
+        <line x1="70" y1="123.33" x2="490" y2="123.33" stroke="#eee" stroke-width="1"/>
+        <line x1="70" y1="170" x2="490" y2="170" stroke="#eee" stroke-width="1"/>
+        <line x1="70" y1="216.67" x2="490" y2="216.67" stroke="#eee" stroke-width="1"/>
+        <line x1="70" y1="263.33" x2="490" y2="263.33" stroke="#eee" stroke-width="1"/>
+
+        <!-- Y axis -->
+        <line x1="70" y1="30" x2="70" y2="310" stroke="#333" stroke-width="2"/>
+        <text x="55" y="315" font-family="Arial" font-size="11">0</text>
+        <text x="55" y="268" font-family="Arial" font-size="11">1</text>
+        <text x="55" y="222" font-family="Arial" font-size="11">2</text>
+        <text x="55" y="175" font-family="Arial" font-size="11">3</text>
+        <text x="55" y="128" font-family="Arial" font-size="11">4</text>
+        <text x="55" y="82" font-family="Arial" font-size="11">5</text>
+        <text x="55" y="35" font-family="Arial" font-size="11">6</text>
+        <text x="20" y="180" font-family="Arial" font-size="12" transform="rotate(-90,20,180)">Ускорение (Sp)</text>
+
+        <!-- X axis -->
+        <line x1="70" y1="310" x2="490" y2="310" stroke="#333" stroke-width="2"/>
+        <!-- X positions: 70 + (420/3)*0 = 70+35=105, 70+140=210, 70+280=350, 70+420=490 -->
+        <text x="120" y="330" font-family="Arial" font-size="11" text-anchor="middle">1</text>
+        <text x="240" y="330" font-family="Arial" font-size="11" text-anchor="middle">2</text>
+        <text x="360" y="330" font-family="Arial" font-size="11" text-anchor="middle">4</text>
+        <text x="480" y="330" font-family="Arial" font-size="11" text-anchor="middle">8</text>
+        <text x="280" y="360" font-family="Arial" font-size="12">Брой процеси (p)</text>
+
+        <!-- Data points X: 120, 240, 360, 480 -->
+        <!-- Y = 310 - value * 46.67 -->
+
+        <!-- Static balancing (blue squares): 1.00, 1.56, 2.50, 3.16 -->
+        <!-- Y: 263.33, 237.53, 193.33, 162.73 -->
+        <polyline points="120,263 240,238 360,193 480,163" fill="none" stroke="#2196f3" stroke-width="2.5"/>
+        <rect x="114" y="257" width="12" height="12" fill="#2196f3"/>
+        <rect x="234" y="232" width="12" height="12" fill="#2196f3"/>
+        <rect x="354" y="187" width="12" height="12" fill="#2196f3"/>
+        <rect x="474" y="157" width="12" height="12" fill="#2196f3"/>
+
+        <!-- P2P Chain (green triangles): 1.00, 1.88, 3.47, 5.47 -->
+        <!-- Y: 263.33, 222.39, 148.17, 54.84 -->
+        <polyline points="120,263 240,222 360,148 480,55" fill="none" stroke="#4caf50" stroke-width="2.5"/>
+        <polygon points="120,253 113,268 127,268" fill="#4caf50"/>
+        <polygon points="240,212 233,227 247,227" fill="#4caf50"/>
+        <polygon points="360,138 353,153 367,153" fill="#4caf50"/>
+        <polygon points="480,45 473,60 487,60" fill="#4caf50"/>
+
+        <!-- P2P Full (orange circles): 1.00, 1.90, 3.61, 4.93 -->
+        <!-- Y: 263.33, 221.33, 141.53, 79.93 -->
+        <polyline points="120,263 240,221 360,142 480,80" fill="none" stroke="#ff9800" stroke-width="2.5"/>
+        <circle cx="120" cy="263" r="7" fill="#ff9800"/>
+        <circle cx="240" cy="221" r="7" fill="#ff9800"/>
+        <circle cx="360" cy="142" r="7" fill="#ff9800"/>
+        <circle cx="480" cy="80" r="7" fill="#ff9800"/>
+
+        <!-- Legend -->
+        <rect x="365" y="40" width="115" height="80" fill="white" stroke="#ddd"/>
+        <rect x="375" y="55" width="14" height="14" fill="#2196f3"/>
+        <text x="395" y="67" font-family="Arial" font-size="11">Статично</text>
+        <polygon points="382,88 375,100 389,100" fill="#4caf50"/>
+        <text x="395" y="96" font-family="Arial" font-size="11">P2P Chain</text>
+        <circle cx="382" cy="112" r="6" fill="#ff9800"/>
+        <text x="395" y="117" font-family="Arial" font-size="11">P2P Full</text>
+    </svg>
+    <div class="figure-caption">Фиг. 6: Сравнение на ускорението при различните подходи</div>
+</div>
+
+<h3>8.2. Наблюдения</h3>
+
+<p><strong>1. Динамичното балансиране превъзхожда статичното</strong> при нехомогенно натоварване. При 8 процеса:</p>
+<ul>
+    <li>Статично: S<sub>p</sub> = 3.16</li>
+    <li>P2P Chain: S<sub>p</sub> = 5.47 (<strong>73% подобрение</strong>)</li>
+    <li>P2P Full: S<sub>p</sub> = 4.93 (<strong>56% подобрение</strong>)</li>
+</ul>
+
+<p><strong>2. Верижната топология показва по-добри резултати</strong> при 8 процеса, въпреки по-високата латентност за глобална комуникация. Причината е в <strong>по-ниските комуникационни разходи</strong> - при пълен граф всеки процес обработва заявки от всички останали.</p>
+
+<p><strong>3. Ефективността намалява</strong> с увеличаване на броя процеси поради:</p>
+<ul>
+    <li>Комуникационни разходи</li>
+    <li>Времето за „краденe" на работа</li>
+    <li>Неделимост на много малки задачи</li>
+</ul>
+
+<p><strong>4. Грануларността е от критично значение:</strong></p>
+<ul>
+    <li>При много фина грануларност (много малки задачи) - комуникационните разходи доминират</li>
+    <li>При много едра грануларност (големи задачи) - недостатъчна гъвкавост за балансиране</li>
+</ul>
+
+<h3>8.3. Влияние на кеш паметта</h3>
+
+<p>При различна грануларност наблюдаваме влиянието на L1 D-кеш (64KB per core на M1):</p>
+<ul>
+    <li>Задачи с малък работен набор данни (&lt;64KB) - добра кеш ефективност</li>
+    <li>Задачи с голям работен набор - кеш промахи, забавяне</li>
+</ul>
+
+<div class="page-break"></div>
+<h2>9. Заключение</h2>
+
+<p>Проектът демонстрира предимствата на P2P архитектурите при разпределено динамично балансиране на паралелни приложения:</p>
+
+<ol>
+    <li><strong>P2P подходът елиминира тясното място</strong> на централизираните системи и позволява по-добра скалируемост.</li>
+
+    <li><strong>Верижната топология</strong> е подходящ избор за системи с голям брой процеси, където комуникационните разходи при пълен граф биха били неприемливи.</li>
+
+    <li><strong>Пълният граф</strong> предлага по-бързо балансиране за малки клъстери, но не скалира добре.</li>
+
+    <li><strong>Изборът на топология</strong> трябва да се съобрази с:
+        <ul>
+            <li>Броя на процесите</li>
+            <li>Характеристиките на натоварването</li>
+            <li>Хардуерната топология на системата</li>
+        </ul>
+    </li>
+
+    <li><strong>За облачни среди</strong> (AWS, Azure) е важно да се съобразим с:
+        <ul>
+            <li>Placement groups за ниска латентност</li>
+            <li>NUMA топологията на многопроцесорните възли</li>
+            <li>Мрежовата bandwidth между availability zones</li>
+        </ul>
+    </li>
+</ol>
+
+<h3>Възможни подобрения</h3>
+
+<ul>
+    <li>Имплементация на <strong>адаптивна топология</strong>, която динамично се променя според натоварването</li>
+    <li><strong>Йерархично балансиране</strong> - локално в рамките на възел, глобално между възли</li>
+    <li>Интеграция с <strong>отказоустойчивост</strong> - продължаване на работата при отказ на възел</li>
+</ul>
+
+<div class="page-break"></div>
+<h2>10. Източници</h2>
+
+<ol>
+    <li>Wilkinson, B., & Allen, M. (2004). <em>Parallel Programming: Techniques and Applications Using Networked Workstations and Parallel Computers</em>. Prentice Hall.</li>
+
+    <li>Gropp, W., Lusk, E., & Skjellum, A. (2014). <em>Using MPI: Portable Parallel Programming with the Message-Passing Interface</em>. MIT Press.</li>
+
+    <li>Kumar, V., Grama, A., Gupta, A., & Karypis, G. (2003). <em>Introduction to Parallel Computing</em>. Addison-Wesley.</li>
+
+    <li>Amazon Web Services. (2024). <em>Amazon EC2 Placement Groups</em>. AWS Documentation.</li>
+
+    <li>Blumofe, R. D., & Leiserson, C. E. (1999). Scheduling multithreaded computations by work stealing. <em>Journal of the ACM</em>, 46(5), 720-748.</li>
+
+    <li>Sanders, P., & Träff, J. L. (2002). The hierarchical factor algorithm for all-to-all communication. <em>Lecture Notes in Computer Science</em>.</li>
+</ol>
+
+<hr>
+<p style="text-align: center; font-style: italic;">
+    Проектът е изготвен в рамките на курса по Разпределени Софтуерни Архитектури, 2026 г.
+</p>
+
+</body>
+</html>
