@@ -14,7 +14,7 @@
 #include <mpi.h>
 
 #define MAX_QUEUE_SIZE 256
-#define NUM_TASKS 32
+#define NUM_TASKS 128
 #define TAG_WORK_REQUEST  100
 #define TAG_WORK_RESPONSE 101
 #define TAG_TERMINATE     102
@@ -92,9 +92,9 @@ int main(int argc, char *argv[]) {
         /* Тежки задачи: fib(42-45), леки: fib(35-38) */
         for (int i = 0; i < NUM_TASKS; i++) {
             if (i < NUM_TASKS / 2) {
-                tasks[i] = base_fib + 2 + (i % 4);  /* 42, 43, 44, 45 */
+                tasks[i] = base_fib - 8 + (i % 4);  /* 42, 43, 44, 45 */
             } else {
-                tasks[i] = base_fib - 5 + (i % 4);  /* 35, 36, 37, 38 */
+                tasks[i] = base_fib - 12 + (i % 4);  /* 35, 36, 37, 38 */
             }
         }
     }

@@ -2,7 +2,7 @@
  * P2P Динамично балансиране с пълен граф (All-to-All)
  *
  * Всеки процес може да комуникира директно с всеки друг.
- * При изчерпване на задачите, поисква работа от произволен процес.
+ * Използва polling-based work stealing без блокиране.
  *
  * Компилация: mpicc -O2 -o p2p_full p2p_full.c
  * Изпълнение: mpirun -np 4 ./p2p_full 40
@@ -14,11 +14,11 @@
 #include <time.h>
 #include <mpi.h>
 
-#define MAX_QUEUE_SIZE 1024
+#define MAX_QUEUE_SIZE 256
+#define NUM_TASKS 32
 #define TAG_WORK_REQUEST  100
 #define TAG_WORK_RESPONSE 101
 #define TAG_TERMINATE     102
-#define TAG_NO_WORK       103
 
 /* Локална опашка от задачи */
 typedef struct {
@@ -66,200 +66,160 @@ long long fibonacci(int n) {
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-/* Избор на произволен процес за поискване на работа */
-int choose_random_peer(int rank, int size, int *tried, int num_tried) {
-    if (num_tried >= size - 1) return -1;
-
-    int peer;
-    int found;
-
-    do {
-        peer = rand() % size;
-        if (peer == rank) continue;
-
-        found = 0;
-        for (int i = 0; i < num_tried; i++) {
-            if (tried[i] == peer) {
-                found = 1;
-                break;
-            }
-        }
-    } while (peer == rank || found);
-
-    return peer;
-}
-
-/* Обработка на входящи заявки за работа - неблокираща */
-int handle_work_requests(TaskQueue *q, int rank, int size) {
-    MPI_Status status;
-    int flag;
-    int buffer;
-    int handled = 0;
-
-    /* Проверка за входящи заявки от всички процеси */
-    while (1) {
-        MPI_Iprobe(MPI_ANY_SOURCE, TAG_WORK_REQUEST, MPI_COMM_WORLD, &flag, &status);
-
-        if (!flag) break;
-
-        int source = status.MPI_SOURCE;
-        MPI_Recv(&buffer, 1, MPI_INT, source, TAG_WORK_REQUEST, MPI_COMM_WORLD, &status);
-
-        if (queue_size(q) > 1) {
-            /* Споделяме половината от задачите */
-            int to_share = queue_size(q) / 2;
-            int shared_tasks[MAX_QUEUE_SIZE];
-
-            for (int i = 0; i < to_share; i++) {
-                shared_tasks[i] = queue_pop(q);
-            }
-
-            /* Изпращане на броя задачи и самите задачи */
-            MPI_Send(&to_share, 1, MPI_INT, source, TAG_WORK_RESPONSE, MPI_COMM_WORLD);
-            MPI_Send(shared_tasks, to_share, MPI_INT, source, TAG_WORK_RESPONSE, MPI_COMM_WORLD);
-
-            printf("Rank %d: Споделих %d задачи с Rank %d (Full Graph)\n", rank, to_share, source);
-            handled++;
-        } else {
-            /* Няма достатъчно работа за споделяне */
-            int zero = 0;
-            MPI_Send(&zero, 1, MPI_INT, source, TAG_NO_WORK, MPI_COMM_WORLD);
-        }
-    }
-
-    return handled;
-}
-
-/* Поискване на работа от процес */
-int request_work_from(TaskQueue *q, int peer, int rank) {
-    if (peer < 0) return 0;
-
-    int request = 1;
-    MPI_Send(&request, 1, MPI_INT, peer, TAG_WORK_REQUEST, MPI_COMM_WORLD);
-
-    MPI_Status status;
-    int received_count;
-    MPI_Recv(&received_count, 1, MPI_INT, peer, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
-    if (status.MPI_TAG == TAG_WORK_RESPONSE && received_count > 0) {
-        int received_tasks[MAX_QUEUE_SIZE];
-        MPI_Recv(received_tasks, received_count, MPI_INT, peer, TAG_WORK_RESPONSE, MPI_COMM_WORLD, &status);
-
-        for (int i = 0; i < received_count; i++) {
-            queue_push(q, received_tasks[i]);
-        }
-
-        printf("Rank %d: Получих %d задачи от Rank %d (Full Graph)\n", rank, received_count, peer);
-        return received_count;
-    }
-
-    return 0;
-}
-
 int main(int argc, char *argv[]) {
     int rank, size;
     int base_fib = 40;
-    int num_tasks = 32;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    /* Инициализация на генератор на случайни числа */
-    srand(time(NULL) + rank);
+    srand(time(NULL) + rank * 1000);
 
     if (argc > 1) {
         base_fib = atoi(argv[1]);
     }
 
-    printf("Rank %d: Топология - пълен граф (всеки към всеки)\n", rank);
-
     /* Инициализация на локалната опашка */
     TaskQueue queue;
     queue_init(&queue);
 
-    /* Rank 0 генерира и разпределя първоначалните задачи */
+    /* Разпределение на първоначалните задачи - НЕХОМОГЕННО */
+    /* Процес 0 получава всички тежки задачи, останалите - леки */
+    int tasks[NUM_TASKS];
     if (rank == 0) {
-        for (int i = 0; i < num_tasks; i++) {
-            int task = base_fib - 5 + (i % 11);
-            int target_rank = i % size;
-
-            if (target_rank == 0) {
-                queue_push(&queue, task);
+        /* Тежки задачи: fib(42-45), леки: fib(35-38) */
+        for (int i = 0; i < NUM_TASKS; i++) {
+            if (i < NUM_TASKS / 2) {
+                tasks[i] = base_fib + 2 + (i % 4);  /* 42, 43, 44, 45 */
             } else {
-                MPI_Send(&task, 1, MPI_INT, target_rank, TAG_WORK_RESPONSE, MPI_COMM_WORLD);
+                tasks[i] = base_fib - 5 + (i % 4);  /* 35, 36, 37, 38 */
             }
         }
+    }
+    MPI_Bcast(tasks, NUM_TASKS, MPI_INT, 0, MPI_COMM_WORLD);
 
-        /* Сигнализираме край на първоначалното разпределение */
-        int end_signal = -1;
-        for (int r = 1; r < size; r++) {
-            MPI_Send(&end_signal, 1, MPI_INT, r, TAG_WORK_RESPONSE, MPI_COMM_WORLD);
+    /* НЕХОМОГЕННО разпределение: процес 0 взима тежките задачи */
+    if (size == 1) {
+        for (int i = 0; i < NUM_TASKS; i++) {
+            queue_push(&queue, tasks[i]);
         }
     } else {
-        /* Получаване на първоначалните задачи */
-        int task;
-        MPI_Status status;
-        while (1) {
-            MPI_Recv(&task, 1, MPI_INT, 0, TAG_WORK_RESPONSE, MPI_COMM_WORLD, &status);
-            if (task == -1) break;
-            queue_push(&queue, task);
+        int heavy_per_proc = (NUM_TASKS / 2) / size;
+        int light_per_proc = (NUM_TASKS / 2) / size;
+
+        /* Процес 0 получава 75% от тежките задачи */
+        if (rank == 0) {
+            int heavy_count = (NUM_TASKS / 2) * 3 / 4;  /* 75% от тежките */
+            for (int i = 0; i < heavy_count; i++) {
+                queue_push(&queue, tasks[i]);
+            }
+        } else {
+            /* Останалите процеси делят останалите задачи */
+            int start_heavy = (NUM_TASKS / 2) * 3 / 4;
+            int remaining_heavy = (NUM_TASKS / 2) - start_heavy;
+            int light_start = NUM_TASKS / 2;
+
+            /* Всеки процес взима равен дял от останалите */
+            for (int i = rank - 1; i < remaining_heavy; i += (size - 1)) {
+                queue_push(&queue, tasks[start_heavy + i]);
+            }
+            for (int i = rank - 1; i < NUM_TASKS / 2; i += (size - 1)) {
+                queue_push(&queue, tasks[light_start + i]);
+            }
         }
     }
-
-    printf("Rank %d: Започвам с %d задачи\n", rank, queue_size(&queue));
 
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
 
-    /* Главен цикъл на обработка */
+    /* Главен цикъл */
     long long local_sum = 0;
     int tasks_processed = 0;
-    int idle_rounds = 0;
-    int max_idle_rounds = size * 3;
+    int done_count = 0;
+    int my_done = 0;
+    int idle_iterations = 0;
+    int max_idle = 1000;
 
-    /* Масив за проследяване на вече питаните процеси в текущия "stealing round" */
-    int *tried_peers = (int *)malloc(size * sizeof(int));
-    int num_tried = 0;
+    /* За work stealing */
+    int pending_request_to = -1;
+    int next_target = (rank + 1) % size;
 
-    while (idle_rounds < max_idle_rounds) {
-        /* Обработка на входящи заявки */
-        handle_work_requests(&queue, rank, size);
+    while (done_count < size) {
+        MPI_Status status;
+        int flag;
 
+        /* 1. Обработваме входящи заявки за работа */
+        MPI_Iprobe(MPI_ANY_SOURCE, TAG_WORK_REQUEST, MPI_COMM_WORLD, &flag, &status);
+        if (flag) {
+            int source = status.MPI_SOURCE;
+            int dummy;
+            MPI_Recv(&dummy, 1, MPI_INT, source, TAG_WORK_REQUEST, MPI_COMM_WORLD, &status);
+
+            int response = (queue_size(&queue) > 1) ? queue_pop(&queue) : -1;
+            MPI_Send(&response, 1, MPI_INT, source, TAG_WORK_RESPONSE, MPI_COMM_WORLD);
+        }
+
+        /* 2. Обработваме входящи DONE съобщения */
+        MPI_Iprobe(MPI_ANY_SOURCE, TAG_TERMINATE, MPI_COMM_WORLD, &flag, &status);
+        if (flag) {
+            int dummy;
+            MPI_Recv(&dummy, 1, MPI_INT, status.MPI_SOURCE, TAG_TERMINATE, MPI_COMM_WORLD, &status);
+            done_count++;
+        }
+
+        /* 3. Проверяваме за отговор на наша заявка */
+        if (pending_request_to >= 0) {
+            MPI_Iprobe(pending_request_to, TAG_WORK_RESPONSE, MPI_COMM_WORLD, &flag, &status);
+            if (flag) {
+                int response;
+                MPI_Recv(&response, 1, MPI_INT, pending_request_to, TAG_WORK_RESPONSE, MPI_COMM_WORLD, &status);
+                if (response >= 0) {
+                    queue_push(&queue, response);
+                    idle_iterations = 0;
+                }
+                pending_request_to = -1;
+            }
+        }
+
+        /* 4. Изпълняваме задача ако има */
         if (!queue_empty(&queue)) {
-            /* Има работа - изпълняваме задача */
             int task = queue_pop(&queue);
             long long result = fibonacci(task);
             local_sum += result;
             tasks_processed++;
-            idle_rounds = 0;
-            num_tried = 0;  /* Reset на списъка с питани процеси */
-
-            /* Периодично обработваме заявки */
-            if (tasks_processed % 2 == 0) {
-                handle_work_requests(&queue, rank, size);
-            }
-        } else {
-            /* Няма работа - поискваме от произволен процес */
-            int peer = choose_random_peer(rank, size, tried_peers, num_tried);
-
-            if (peer >= 0) {
-                tried_peers[num_tried++] = peer;
-                int got_work = request_work_from(&queue, peer, rank);
-
-                if (got_work) {
-                    idle_rounds = 0;
-                    num_tried = 0;
+            idle_iterations = 0;
+            my_done = 0;
+        } else if (pending_request_to < 0 && !my_done) {
+            /* 5. Нямаме работа - пращаме заявка на следващ процес (round-robin) */
+            if (size > 1) {
+                /* Пълен граф - можем да питаме всеки */
+                if (next_target == rank) {
+                    next_target = (next_target + 1) % size;
                 }
-            } else {
-                /* Питахме всички - увеличаваме idle counter */
-                idle_rounds++;
-                num_tried = 0;  /* Започваме нов цикъл на питане */
+
+                int dummy = rank;
+                MPI_Send(&dummy, 1, MPI_INT, next_target, TAG_WORK_REQUEST, MPI_COMM_WORLD);
+                pending_request_to = next_target;
+                next_target = (next_target + 1) % size;
+            }
+
+            idle_iterations++;
+
+            /* Ако сме idle твърде дълго, сигнализираме DONE */
+            if (idle_iterations > max_idle && !my_done) {
+                my_done = 1;
+                done_count++;
+                /* Broadcast DONE на всички */
+                for (int p = 0; p < size; p++) {
+                    if (p != rank) {
+                        int dummy = rank;
+                        MPI_Send(&dummy, 1, MPI_INT, p, TAG_TERMINATE, MPI_COMM_WORLD);
+                    }
+                }
             }
         }
     }
-
-    free(tried_peers);
 
     MPI_Barrier(MPI_COMM_WORLD);
     double end_time = MPI_Wtime();
@@ -274,18 +234,13 @@ int main(int argc, char *argv[]) {
     double max_time;
     MPI_Reduce(&local_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-    /* Статистики за всеки процес */
-    printf("Rank %d: Обработих %d задачи, локална сума: %lld\n",
-           rank, tasks_processed, local_sum);
-
     if (rank == 0) {
-        printf("\n=== Резултати (P2P Full Graph Topology) ===\n");
+        printf("\n=== Резултати (P2P Full Graph) ===\n");
         printf("Брой процеси: %d\n", size);
-        printf("Топология: Пълен граф (All-to-All)\n");
-        printf("Брой обработени задачи: %d\n", total_tasks);
+        printf("Брой задачи: %d\n", total_tasks);
         printf("Обща сума: %lld\n", global_sum);
         printf("Време за изпълнение: %.3f секунди\n", max_time);
-        printf("============================================\n");
+        printf("==================================\n");
     }
 
     MPI_Finalize();

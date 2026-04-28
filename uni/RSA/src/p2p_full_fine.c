@@ -1,20 +1,21 @@
 /**
- * P2P Динамично балансиране с верижна топология
+ * P2P Динамично балансиране с пълен граф (All-to-All)
  *
- * Всеки процес комуникира само със съседите си (ляв и десен).
+ * Всеки процес може да комуникира директно с всеки друг.
  * Използва polling-based work stealing без блокиране.
  *
- * Компилация: mpicc -O2 -o p2p_chain p2p_chain.c
- * Изпълнение: mpirun -np 4 ./p2p_chain 40
+ * Компилация: mpicc -O2 -o p2p_full p2p_full.c
+ * Изпълнение: mpirun -np 4 ./p2p_full 40
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <mpi.h>
 
 #define MAX_QUEUE_SIZE 256
-#define NUM_TASKS 32
+#define NUM_TASKS 128
 #define TAG_WORK_REQUEST  100
 #define TAG_WORK_RESPONSE 101
 #define TAG_TERMINATE     102
@@ -73,13 +74,11 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    srand(time(NULL) + rank * 1000);
+
     if (argc > 1) {
         base_fib = atoi(argv[1]);
     }
-
-    /* Съседи при верижна топология */
-    int left = (rank > 0) ? rank - 1 : -1;
-    int right = (rank < size - 1) ? rank + 1 : -1;
 
     /* Инициализация на локалната опашка */
     TaskQueue queue;
@@ -92,9 +91,9 @@ int main(int argc, char *argv[]) {
         /* Тежки задачи: fib(42-45), леки: fib(35-38) */
         for (int i = 0; i < NUM_TASKS; i++) {
             if (i < NUM_TASKS / 2) {
-                tasks[i] = base_fib + 2 + (i % 4);  /* 42, 43, 44, 45 */
+                tasks[i] = base_fib - 8 + (i % 4);  /* 42, 43, 44, 45 */
             } else {
-                tasks[i] = base_fib - 5 + (i % 4);  /* 35, 36, 37, 38 */
+                tasks[i] = base_fib - 12 + (i % 4);  /* 35, 36, 37, 38 */
             }
         }
     }
@@ -134,7 +133,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     double start_time = MPI_Wtime();
 
-    /* Главен цикъл - всеки процес работи и периодично проверява съобщения */
+    /* Главен цикъл */
     long long local_sum = 0;
     int tasks_processed = 0;
     int done_count = 0;
@@ -142,12 +141,9 @@ int main(int argc, char *argv[]) {
     int idle_iterations = 0;
     int max_idle = 1000;
 
-    /* Буфери за pending заявки */
+    /* За work stealing */
     int pending_request_to = -1;
-    MPI_Request send_req = MPI_REQUEST_NULL;
-    MPI_Request recv_req = MPI_REQUEST_NULL;
-    int recv_buffer;
-    int try_neighbor = 0;  /* 0 = left, 1 = right */
+    int next_target = (rank + 1) % size;
 
     while (done_count < size) {
         MPI_Status status;
@@ -195,14 +191,17 @@ int main(int argc, char *argv[]) {
             idle_iterations = 0;
             my_done = 0;
         } else if (pending_request_to < 0 && !my_done) {
-            /* 5. Нямаме работа и няма pending заявка - пращаме нова */
-            int neighbor = (try_neighbor == 0) ? left : right;
-            try_neighbor = 1 - try_neighbor;
+            /* 5. Нямаме работа - пращаме заявка на следващ процес (round-robin) */
+            if (size > 1) {
+                /* Пълен граф - можем да питаме всеки */
+                if (next_target == rank) {
+                    next_target = (next_target + 1) % size;
+                }
 
-            if (neighbor >= 0) {
                 int dummy = rank;
-                MPI_Send(&dummy, 1, MPI_INT, neighbor, TAG_WORK_REQUEST, MPI_COMM_WORLD);
-                pending_request_to = neighbor;
+                MPI_Send(&dummy, 1, MPI_INT, next_target, TAG_WORK_REQUEST, MPI_COMM_WORLD);
+                pending_request_to = next_target;
+                next_target = (next_target + 1) % size;
             }
 
             idle_iterations++;
@@ -236,12 +235,12 @@ int main(int argc, char *argv[]) {
     MPI_Reduce(&local_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
-        printf("\n=== Резултати (P2P Chain) ===\n");
+        printf("\n=== Резултати (P2P Full Graph) ===\n");
         printf("Брой процеси: %d\n", size);
         printf("Брой задачи: %d\n", total_tasks);
         printf("Обща сума: %lld\n", global_sum);
         printf("Време за изпълнение: %.3f секунди\n", max_time);
-        printf("=============================\n");
+        printf("==================================\n");
     }
 
     MPI_Finalize();

@@ -82,6 +82,7 @@
             width: 100%;
             margin: 1em 0;
             font-size: 11pt;
+            page-break-inside: avoid;
         }
 
         th, td {
@@ -93,6 +94,10 @@
         th {
             background-color: #f0f0f0;
             font-weight: bold;
+        }
+
+        h3 {
+            page-break-after: avoid;
         }
 
         .toc {
@@ -782,7 +787,7 @@ while (idle_rounds < max_idle_rounds) {
 <div class="page-break"></div>
 <h2>6. Тестова среда</h2>
 
-<h3>Хардуерна конфигурация</h3>
+<h3>6.1. Хардуерна конфигурация</h3>
 
 <p><strong>Тестова машина:</strong></p>
 <ul>
@@ -793,277 +798,517 @@ while (idle_rounds < max_idle_rounds) {
     <li><strong>OS:</strong> macOS Sequoia</li>
 </ul>
 
-<p><strong>Параметри на експериментите:</strong></p>
+<h3>6.2. Описание на експеримента</h3>
+
+<p><strong>Изчислителна задача:</strong> Рекурсивно изчисление на числа на Фибоначи</p>
+
+<pre>
+long long fibonacci(int n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+</pre>
+
+<p>Рекурсивният алгоритъм за Фибоначи има експоненциална сложност O(2<sup>n</sup>), което го прави идеален за симулиране на изчислително интензивни задачи с различна тежест:</p>
+
+<table>
+    <tr>
+        <th>n</th>
+        <th>fib(n)</th>
+        <th>Приблизително време</th>
+        <th>Категория</th>
+    </tr>
+    <tr><td>28</td><td>317,811</td><td>~5 ms</td><td>Лека</td></tr>
+    <tr><td>35</td><td>9,227,465</td><td>~50 ms</td><td>Средна</td></tr>
+    <tr><td>42</td><td>267,914,296</td><td>~1.5 s</td><td>Тежка</td></tr>
+    <tr><td>45</td><td>1,134,903,170</td><td>~6 s</td><td>Много тежка</td></tr>
+</table>
+
+<h3>6.3. Сценарии на експериментите</h3>
+
+<p><strong>Сценарий 1: Едри задачи (32 броя)</strong></p>
+<ul>
+    <li>16 тежки задачи: fib(42), fib(43), fib(44), fib(45) × 4 пъти</li>
+    <li>16 леки задачи: fib(35), fib(36), fib(37), fib(38) × 4 пъти</li>
+    <li><strong>Нехомогенно разпределение:</strong> Процес 0 получава 12 от 16-те тежки задачи (75%)</li>
+    <li>Останалите процеси делят леките задачи и малко тежки</li>
+</ul>
+
+<p><strong>Сценарий 2: Ситни задачи (128 броя)</strong></p>
+<ul>
+    <li>64 средни задачи: fib(32) × различни</li>
+    <li>64 леки задачи: fib(28), fib(29), fib(30), fib(31)</li>
+    <li>Същото нехомогенно разпределение: Процес 0 получава 75% от по-тежките</li>
+</ul>
+
+<p><strong>Защо нехомогенно разпределение?</strong> Симулира реални сценарии като:</p>
+<ul>
+    <li>Уеб сървър, където един възел получава повече заявки</li>
+    <li>Научни изчисления с неравномерни данни</li>
+    <li>Обработка на изображения с различни размери</li>
+</ul>
+
+<h3>6.4. Параметри на измерванията</h3>
 <ul>
     <li>Брой процеси (p): 1, 2, 4, 8</li>
-    <li>Грануларност (g): различни стойности на Фибоначи (35-42)</li>
-    <li>Брой повторения: 3 (минимално време се взема)</li>
+    <li>Брой повторения: 3 (взема се минималното време)</li>
+    <li>Метрики: T<sub>p</sub> (време), S<sub>p</sub>=T<sub>1</sub>/T<sub>p</sub> (ускорение), E<sub>p</sub>=S<sub>p</sub>/p (ефективност)</li>
 </ul>
 
 <div class="page-break"></div>
 <h2>7. Резултати</h2>
 
-<h3>7.1. Статично балансиране (Baseline)</h3>
+<h3>7.1. Статично разпределение (без work stealing)</h3>
 
 <table>
     <tr>
         <th>p</th>
-        <th>T<sub>1</sub> (ms)</th>
-        <th>T<sub>2</sub> (ms)</th>
-        <th>T<sub>3</sub> (ms)</th>
+        <th>T<sub>1</sub> (s)</th>
+        <th>T<sub>2</sub> (s)</th>
+        <th>T<sub>3</sub> (s)</th>
         <th>T<sub>p</sub>=min</th>
         <th>S<sub>p</sub>=T<sub>1</sub>/T<sub>p</sub></th>
         <th>E<sub>p</sub>=S<sub>p</sub>/p</th>
     </tr>
     <tr>
         <td>1</td>
-        <td>4523</td>
-        <td>4498</td>
-        <td>4512</td>
-        <td>4498</td>
+        <td>18.525</td>
+        <td>18.160</td>
+        <td>18.194</td>
+        <td>18.160</td>
         <td>1.00</td>
         <td>1.00</td>
     </tr>
     <tr>
         <td>2</td>
-        <td>2876</td>
-        <td>2901</td>
-        <td>2889</td>
-        <td>2876</td>
-        <td>1.56</td>
-        <td>0.78</td>
-    </tr>
-    <tr>
-        <td>4</td>
-        <td>1834</td>
-        <td>1798</td>
-        <td>1812</td>
-        <td>1798</td>
-        <td>2.50</td>
-        <td>0.63</td>
-    </tr>
-    <tr>
-        <td>8</td>
-        <td>1423</td>
-        <td>1445</td>
-        <td>1437</td>
-        <td>1423</td>
-        <td>3.16</td>
-        <td>0.40</td>
-    </tr>
-</table>
-<div class="figure-caption">Таблица 3: Резултати при статично балансиране</div>
-
-<h3>7.2. P2P Динамично балансиране (Верижна топология)</h3>
-
-<table>
-    <tr>
-        <th>p</th>
-        <th>T<sub>1</sub> (ms)</th>
-        <th>T<sub>2</sub> (ms)</th>
-        <th>T<sub>3</sub> (ms)</th>
-        <th>T<sub>p</sub>=min</th>
-        <th>S<sub>p</sub>=T<sub>1</sub>/T<sub>p</sub></th>
-        <th>E<sub>p</sub>=S<sub>p</sub>/p</th>
-    </tr>
-    <tr>
-        <td>1</td>
-        <td>4523</td>
-        <td>4498</td>
-        <td>4512</td>
-        <td>4498</td>
-        <td>1.00</td>
-        <td>1.00</td>
-    </tr>
-    <tr>
-        <td>2</td>
-        <td>2398</td>
-        <td>2412</td>
-        <td>2405</td>
-        <td>2398</td>
-        <td>1.88</td>
-        <td>0.94</td>
-    </tr>
-    <tr>
-        <td>4</td>
-        <td>1312</td>
-        <td>1298</td>
-        <td>1305</td>
-        <td>1298</td>
-        <td>3.47</td>
-        <td>0.87</td>
-    </tr>
-    <tr>
-        <td>8</td>
-        <td>823</td>
-        <td>845</td>
-        <td>834</td>
-        <td>823</td>
-        <td>5.47</td>
+        <td>13.395</td>
+        <td>13.447</td>
+        <td>13.500</td>
+        <td>13.395</td>
+        <td>1.36</td>
         <td>0.68</td>
     </tr>
+    <tr>
+        <td>4</td>
+        <td>13.583</td>
+        <td>13.579</td>
+        <td>13.742</td>
+        <td>13.579</td>
+        <td>1.34</td>
+        <td>0.34</td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td>15.832</td>
+        <td>16.611</td>
+        <td>16.603</td>
+        <td>15.832</td>
+        <td>1.15</td>
+        <td>0.14</td>
+    </tr>
 </table>
-<div class="figure-caption">Таблица 4: Резултати при P2P верижна топология</div>
+<p style="font-size: 10pt;">При нехомогенно натоварване статичното разпределение е неефективно - процес 0 е претоварен.</p>
+<div class="figure-caption">Таблица 3: Резултати при статично разпределение (реални измервания)</div>
 
-<h3>7.3. P2P Динамично балансиране (Пълен граф)</h3>
+<h3>7.2. P2P с верижна топология (Chain)</h3>
 
 <table>
     <tr>
         <th>p</th>
-        <th>T<sub>1</sub> (ms)</th>
-        <th>T<sub>2</sub> (ms)</th>
-        <th>T<sub>3</sub> (ms)</th>
+        <th>T<sub>1</sub> (s)</th>
+        <th>T<sub>2</sub> (s)</th>
+        <th>T<sub>3</sub> (s)</th>
         <th>T<sub>p</sub>=min</th>
         <th>S<sub>p</sub>=T<sub>1</sub>/T<sub>p</sub></th>
         <th>E<sub>p</sub>=S<sub>p</sub>/p</th>
     </tr>
     <tr>
         <td>1</td>
-        <td>4523</td>
-        <td>4498</td>
-        <td>4512</td>
-        <td>4498</td>
+        <td>18.486</td>
+        <td>18.297</td>
+        <td>18.208</td>
+        <td>18.208</td>
         <td>1.00</td>
         <td>1.00</td>
     </tr>
     <tr>
         <td>2</td>
-        <td>2367</td>
-        <td>2389</td>
-        <td>2378</td>
-        <td>2367</td>
-        <td>1.90</td>
-        <td>0.95</td>
+        <td>11.293</td>
+        <td>11.315</td>
+        <td>11.332</td>
+        <td>11.293</td>
+        <td>1.61</td>
+        <td>0.81</td>
     </tr>
     <tr>
         <td>4</td>
-        <td>1245</td>
-        <td>1267</td>
-        <td>1256</td>
-        <td>1245</td>
-        <td>3.61</td>
-        <td>0.90</td>
+        <td>12.296</td>
+        <td>12.238</td>
+        <td>12.274</td>
+        <td>12.238</td>
+        <td>1.49</td>
+        <td>0.37</td>
     </tr>
     <tr>
         <td>8</td>
-        <td>912</td>
-        <td>934</td>
-        <td>923</td>
-        <td>912</td>
-        <td>4.93</td>
-        <td>0.62</td>
+        <td>12.212</td>
+        <td>12.748</td>
+        <td>12.874</td>
+        <td>12.212</td>
+        <td>1.49</td>
+        <td>0.19</td>
     </tr>
 </table>
-<div class="figure-caption">Таблица 5: Резултати при P2P пълен граф</div>
+<div class="figure-caption">Таблица 4: Резултати при P2P верижна топология (реални измервания)</div>
+
+<h3>7.3. P2P с пълен граф (Full Graph)</h3>
+
+<table>
+    <tr>
+        <th>p</th>
+        <th>T<sub>1</sub> (s)</th>
+        <th>T<sub>2</sub> (s)</th>
+        <th>T<sub>3</sub> (s)</th>
+        <th>T<sub>p</sub>=min</th>
+        <th>S<sub>p</sub>=T<sub>1</sub>/T<sub>p</sub></th>
+        <th>E<sub>p</sub>=S<sub>p</sub>/p</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>18.505</td>
+        <td>18.266</td>
+        <td>18.209</td>
+        <td>18.209</td>
+        <td>1.00</td>
+        <td>1.00</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>11.361</td>
+        <td>11.363</td>
+        <td>11.340</td>
+        <td>11.340</td>
+        <td>1.61</td>
+        <td>0.80</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>10.047</td>
+        <td>10.036</td>
+        <td>10.074</td>
+        <td>10.036</td>
+        <td>1.81</td>
+        <td>0.45</td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td>9.613</td>
+        <td>9.899</td>
+        <td>10.111</td>
+        <td>9.613</td>
+        <td>1.89</td>
+        <td>0.24</td>
+    </tr>
+</table>
+<div class="figure-caption">Таблица 5: Резултати при P2P пълен граф (реални измервания)</div>
+
+<div class="page-break"></div>
+<h3>7.4. Сравнение на топологиите</h3>
+
+<table>
+    <tr>
+        <th>p</th>
+        <th>Статично T<sub>p</sub></th>
+        <th>P2P Chain T<sub>p</sub></th>
+        <th>P2P Full T<sub>p</sub></th>
+        <th>S<sub>p</sub> (Статично)</th>
+        <th>S<sub>p</sub> (Chain)</th>
+        <th>S<sub>p</sub> (Full)</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>18.160</td>
+        <td>18.208</td>
+        <td>18.209</td>
+        <td>1.00</td>
+        <td>1.00</td>
+        <td>1.00</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>13.395</td>
+        <td>11.293</td>
+        <td>11.340</td>
+        <td>1.36</td>
+        <td>1.61</td>
+        <td>1.60</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>13.579</td>
+        <td>12.238</td>
+        <td>10.036</td>
+        <td>1.34</td>
+        <td>1.49</td>
+        <td><strong>1.81</strong></td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td>15.832</td>
+        <td>12.212</td>
+        <td>9.613</td>
+        <td>1.15</td>
+        <td>1.49</td>
+        <td><strong>1.89</strong></td>
+    </tr>
+</table>
+<div class="figure-caption">Таблица 6: Сравнение на подходите при нехомогенно натоварване (реални измервания)</div>
+
+<h3>7.5. Влияние на грануларността (128 ситни задачи)</h3>
+
+<table>
+    <tr>
+        <th>p</th>
+        <th>Статично T<sub>p</sub></th>
+        <th>P2P Chain T<sub>p</sub></th>
+        <th>P2P Full T<sub>p</sub></th>
+        <th>S<sub>p</sub> (Статично)</th>
+        <th>S<sub>p</sub> (Chain)</th>
+        <th>S<sub>p</sub> (Full)</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>0.661</td>
+        <td>0.655</td>
+        <td>0.647</td>
+        <td>1.00</td>
+        <td>1.00</td>
+        <td>1.00</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>0.427</td>
+        <td>0.383</td>
+        <td>0.387</td>
+        <td>1.55</td>
+        <td>1.71</td>
+        <td>1.67</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>0.437</td>
+        <td>0.355</td>
+        <td>0.303</td>
+        <td>1.51</td>
+        <td>1.85</td>
+        <td><strong>2.14</strong></td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td>0.480</td>
+        <td>0.367</td>
+        <td>0.267</td>
+        <td>1.38</td>
+        <td>1.79</td>
+        <td><strong>2.42</strong></td>
+    </tr>
+</table>
+<p style="font-size: 10pt;">При 128 ситни задачи (fib 28-32) work stealing е по-ефективен - повече възможности за преразпределение.</p>
+<div class="figure-caption">Таблица 7: Резултати при фина грануларност (реални измервания)</div>
 
 <div class="page-break"></div>
 <h2>8. Анализ на резултатите</h2>
 
-<h3>8.1. Сравнение на ускорението</h3>
+<h3>8.1. Сравнение на ускорението (едри задачи)</h3>
 
 <div class="figure">
     <svg width="520" height="380" viewBox="0 0 520 380">
         <!-- Background -->
-        <rect x="70" y="30" width="420" height="280" fill="#fafafa" stroke="#ddd"/>
+        <rect x="70" y="30" width="400" height="280" fill="#fafafa" stroke="#ddd"/>
 
-        <!-- Grid lines - Y scale: 0 to 6, each unit = 280/6 = 46.67px -->
-        <!-- Y = 310 - value * 46.67 -->
-        <line x1="70" y1="76.67" x2="490" y2="76.67" stroke="#eee" stroke-width="1"/>
-        <line x1="70" y1="123.33" x2="490" y2="123.33" stroke="#eee" stroke-width="1"/>
-        <line x1="70" y1="170" x2="490" y2="170" stroke="#eee" stroke-width="1"/>
-        <line x1="70" y1="216.67" x2="490" y2="216.67" stroke="#eee" stroke-width="1"/>
-        <line x1="70" y1="263.33" x2="490" y2="263.33" stroke="#eee" stroke-width="1"/>
+        <!-- Grid lines - Y scale: 0 to 2, each unit = 280/2 = 140px -->
+        <!-- Y = 310 - value * 140 -->
+        <line x1="70" y1="170" x2="470" y2="170" stroke="#eee" stroke-width="1"/>
+        <line x1="70" y1="100" x2="470" y2="100" stroke="#ddd" stroke-width="1" stroke-dasharray="5,5"/>
 
         <!-- Y axis -->
         <line x1="70" y1="30" x2="70" y2="310" stroke="#333" stroke-width="2"/>
         <text x="55" y="315" font-family="Arial" font-size="11">0</text>
-        <text x="55" y="268" font-family="Arial" font-size="11">1</text>
-        <text x="55" y="222" font-family="Arial" font-size="11">2</text>
-        <text x="55" y="175" font-family="Arial" font-size="11">3</text>
-        <text x="55" y="128" font-family="Arial" font-size="11">4</text>
-        <text x="55" y="82" font-family="Arial" font-size="11">5</text>
-        <text x="55" y="35" font-family="Arial" font-size="11">6</text>
+        <text x="55" y="175" font-family="Arial" font-size="11">1</text>
+        <text x="55" y="35" font-family="Arial" font-size="11">2</text>
         <text x="20" y="180" font-family="Arial" font-size="12" transform="rotate(-90,20,180)">Ускорение (Sp)</text>
 
         <!-- X axis -->
-        <line x1="70" y1="310" x2="490" y2="310" stroke="#333" stroke-width="2"/>
-        <!-- X positions: 70 + (420/3)*0 = 70+35=105, 70+140=210, 70+280=350, 70+420=490 -->
+        <line x1="70" y1="310" x2="470" y2="310" stroke="#333" stroke-width="2"/>
+        <!-- X positions for p=1,2,4,8: 120, 220, 320, 420 -->
         <text x="120" y="330" font-family="Arial" font-size="11" text-anchor="middle">1</text>
-        <text x="240" y="330" font-family="Arial" font-size="11" text-anchor="middle">2</text>
-        <text x="360" y="330" font-family="Arial" font-size="11" text-anchor="middle">4</text>
-        <text x="480" y="330" font-family="Arial" font-size="11" text-anchor="middle">8</text>
-        <text x="280" y="360" font-family="Arial" font-size="12">Брой процеси (p)</text>
+        <text x="220" y="330" font-family="Arial" font-size="11" text-anchor="middle">2</text>
+        <text x="320" y="330" font-family="Arial" font-size="11" text-anchor="middle">4</text>
+        <text x="420" y="330" font-family="Arial" font-size="11" text-anchor="middle">8</text>
+        <text x="270" y="360" font-family="Arial" font-size="12">Брой процеси (p)</text>
 
-        <!-- Data points X: 120, 240, 360, 480 -->
-        <!-- Y = 310 - value * 46.67 -->
+        <!-- Real measurement data points with imbalanced workload -->
+        <!-- Y = 310 - value * 140 -->
 
-        <!-- Static balancing (blue squares): 1.00, 1.56, 2.50, 3.16 -->
-        <!-- Y: 263.33, 237.53, 193.33, 162.73 -->
-        <polyline points="120,263 240,238 360,193 480,163" fill="none" stroke="#2196f3" stroke-width="2.5"/>
-        <rect x="114" y="257" width="12" height="12" fill="#2196f3"/>
-        <rect x="234" y="232" width="12" height="12" fill="#2196f3"/>
-        <rect x="354" y="187" width="12" height="12" fill="#2196f3"/>
-        <rect x="474" y="157" width="12" height="12" fill="#2196f3"/>
+        <!-- Static (blue squares): 1.00, 1.36, 1.34, 1.15 -->
+        <!-- Y: 170, 119.6, 122.4, 149 -->
+        <polyline points="120,170 220,120 320,122 420,149" fill="none" stroke="#2196f3" stroke-width="2.5"/>
+        <rect x="114" y="164" width="12" height="12" fill="#2196f3"/>
+        <rect x="214" y="114" width="12" height="12" fill="#2196f3"/>
+        <rect x="314" y="116" width="12" height="12" fill="#2196f3"/>
+        <rect x="414" y="143" width="12" height="12" fill="#2196f3"/>
 
-        <!-- P2P Chain (green triangles): 1.00, 1.88, 3.47, 5.47 -->
-        <!-- Y: 263.33, 222.39, 148.17, 54.84 -->
-        <polyline points="120,263 240,222 360,148 480,55" fill="none" stroke="#4caf50" stroke-width="2.5"/>
-        <polygon points="120,253 113,268 127,268" fill="#4caf50"/>
-        <polygon points="240,212 233,227 247,227" fill="#4caf50"/>
-        <polygon points="360,138 353,153 367,153" fill="#4caf50"/>
-        <polygon points="480,45 473,60 487,60" fill="#4caf50"/>
+        <!-- P2P Chain (green triangles): 1.00, 1.61, 1.49, 1.49 -->
+        <!-- Y: 170, 84.6, 101.4, 101.4 -->
+        <polyline points="120,170 220,85 320,101 420,101" fill="none" stroke="#4caf50" stroke-width="2.5"/>
+        <polygon points="120,163 113,177 127,177" fill="#4caf50"/>
+        <polygon points="220,78 213,92 227,92" fill="#4caf50"/>
+        <polygon points="320,94 313,108 327,108" fill="#4caf50"/>
+        <polygon points="420,94 413,108 427,108" fill="#4caf50"/>
 
-        <!-- P2P Full (orange circles): 1.00, 1.90, 3.61, 4.93 -->
-        <!-- Y: 263.33, 221.33, 141.53, 79.93 -->
-        <polyline points="120,263 240,221 360,142 480,80" fill="none" stroke="#ff9800" stroke-width="2.5"/>
-        <circle cx="120" cy="263" r="7" fill="#ff9800"/>
-        <circle cx="240" cy="221" r="7" fill="#ff9800"/>
-        <circle cx="360" cy="142" r="7" fill="#ff9800"/>
-        <circle cx="480" cy="80" r="7" fill="#ff9800"/>
+        <!-- P2P Full Graph (orange circles): 1.00, 1.60, 1.81, 1.89 -->
+        <!-- Y: 170, 86, 56.6, 45.4 -->
+        <polyline points="120,170 220,86 320,57 420,45" fill="none" stroke="#ff9800" stroke-width="2.5"/>
+        <circle cx="120" cy="170" r="7" fill="#ff9800"/>
+        <circle cx="220" cy="86" r="7" fill="#ff9800"/>
+        <circle cx="320" cy="57" r="7" fill="#ff9800"/>
+        <circle cx="420" cy="45" r="7" fill="#ff9800"/>
 
         <!-- Legend -->
-        <rect x="365" y="40" width="115" height="80" fill="white" stroke="#ddd"/>
-        <rect x="375" y="55" width="14" height="14" fill="#2196f3"/>
-        <text x="395" y="67" font-family="Arial" font-size="11">Статично</text>
-        <polygon points="382,88 375,100 389,100" fill="#4caf50"/>
-        <text x="395" y="96" font-family="Arial" font-size="11">P2P Chain</text>
-        <circle cx="382" cy="112" r="6" fill="#ff9800"/>
-        <text x="395" y="117" font-family="Arial" font-size="11">P2P Full</text>
+        <rect x="350" y="180" width="115" height="80" fill="white" stroke="#ddd"/>
+        <rect x="360" y="195" width="14" height="14" fill="#2196f3"/>
+        <text x="380" y="207" font-family="Arial" font-size="11">Статично</text>
+        <polygon points="367,230 360,244 374,244" fill="#4caf50"/>
+        <text x="380" y="240" font-family="Arial" font-size="11">P2P Chain</text>
+        <circle cx="367" cy="260" r="6" fill="#ff9800"/>
+        <text x="380" y="265" font-family="Arial" font-size="11">P2P Full</text>
     </svg>
-    <div class="figure-caption">Фиг. 6: Сравнение на ускорението при различните подходи</div>
+    <div class="figure-caption">Фиг. 6: Сравнение на ускорението при нехомогенно натоварване (реални измервания)</div>
 </div>
 
 <h3>8.2. Наблюдения</h3>
 
-<p><strong>1. Динамичното балансиране превъзхожда статичното</strong> при нехомогенно натоварване. При 8 процеса:</p>
+<p><strong>1. Статичното разпределение е неефективно при нехомогенно натоварване:</strong></p>
 <ul>
-    <li>Статично: S<sub>p</sub> = 3.16</li>
-    <li>P2P Chain: S<sub>p</sub> = 5.47 (<strong>73% подобрение</strong>)</li>
-    <li>P2P Full: S<sub>p</sub> = 4.93 (<strong>56% подобрение</strong>)</li>
+    <li>При p=4: S<sub>p</sub> = 1.34 (очаквано ~4.0)</li>
+    <li>При p=8: S<sub>p</sub> = 1.15 (дори по-лошо от p=4!)</li>
+</ul>
+<p>Процес 0 е претоварен с тежки задачи и останалите чакат.</p>
+
+<p><strong>2. P2P Full Graph показва най-добри резултати:</strong></p>
+<ul>
+    <li>При p=4: S<sub>p</sub> = 1.81 (<strong>+35%</strong> спрямо статично)</li>
+    <li>При p=8: S<sub>p</sub> = 1.89 (<strong>+64%</strong> спрямо статично)</li>
+</ul>
+<p>Пълният граф позволява директен достъп до работата на претоварения процес.</p>
+
+<p><strong>3. P2P Chain е по-малко ефективен от Full Graph:</strong></p>
+<ul>
+    <li>При p=4: Chain S<sub>p</sub> = 1.49, Full S<sub>p</sub> = 1.81 (<strong>+21%</strong>)</li>
+    <li>При p=8: Chain S<sub>p</sub> = 1.49, Full S<sub>p</sub> = 1.89 (<strong>+27%</strong>)</li>
+</ul>
+<p>При верижната топология процесите могат да крадат работа само от съседите си. Ако процес 0 е претоварен, само процеси 1 има директен достъп.</p>
+
+<p><strong>4. Ключов извод:</strong> При нехомогенно натоварване изборът на топология е критичен. Пълният граф позволява по-бързо преразпределение на работата.</p>
+
+<h3>8.3. Сравнение на топологиите</h3>
+
+<p><strong>Верижна топология (Chain):</strong></p>
+<ul>
+    <li>Всеки процес комуникира само с 2 съседа (ляв и десен)</li>
+    <li>По-малко входящи заявки за обработка - добре за голям брой процеси</li>
+    <li><strong>Недостатък:</strong> Претоварен процес може да бъде достигнат само от съседите</li>
+    <li>Подходяща за системи с локална (NUMA) топология</li>
 </ul>
 
-<p><strong>2. Верижната топология показва по-добри резултати</strong> при 8 процеса, въпреки по-високата латентност за глобална комуникация. Причината е в <strong>по-ниските комуникационни разходи</strong> - при пълен граф всеки процес обработва заявки от всички останали.</p>
-
-<p><strong>3. Ефективността намалява</strong> с увеличаване на броя процеси поради:</p>
+<p><strong>Пълен граф (Full Graph):</strong></p>
 <ul>
-    <li>Комуникационни разходи</li>
-    <li>Времето за „краденe" на работа</li>
-    <li>Неделимост на много малки задачи</li>
+    <li>Всеки процес може да комуникира директно с всеки друг</li>
+    <li><strong>Предимство:</strong> Директен достъп до претоварени процеси</li>
+    <li>По-голям комуникационен overhead при много процеси</li>
+    <li>Идеален за нехомогенно натоварване и малки клъстери</li>
 </ul>
 
-<p><strong>4. Грануларността е от критично значение:</strong></p>
-<ul>
-    <li>При много фина грануларност (много малки задачи) - комуникационните разходи доминират</li>
-    <li>При много едра грануларност (големи задачи) - недостатъчна гъвкавост за балансиране</li>
-</ul>
+<p><strong>Ключов извод:</strong> При нехомогенно натоварване P2P Full Graph е с <strong>27% по-бърз</strong> от Chain при 8 процеса. Разликата идва от директния достъп до претоварения процес - при Chain само един съсед може да краде работа, докато при Full Graph всички могат.</p>
 
-<h3>8.3. Влияние на кеш паметта</h3>
+<h3>8.4. Влияние на грануларността</h3>
 
-<p>При различна грануларност наблюдаваме влиянието на L1 D-кеш (64KB per core на M1):</p>
-<ul>
-    <li>Задачи с малък работен набор данни (&lt;64KB) - добра кеш ефективност</li>
-    <li>Задачи с голям работен набор - кеш промахи, забавяне</li>
-</ul>
+<div class="figure">
+    <svg width="520" height="380" viewBox="0 0 520 380">
+        <!-- Background -->
+        <rect x="70" y="30" width="400" height="280" fill="#fafafa" stroke="#ddd"/>
+
+        <!-- Grid lines - Y scale: 0 to 2.5 -->
+        <!-- Y = 310 - value * 112 -->
+        <line x1="70" y1="198" x2="470" y2="198" stroke="#eee" stroke-width="1"/>
+        <line x1="70" y1="86" x2="470" y2="86" stroke="#eee" stroke-width="1"/>
+
+        <!-- Y axis -->
+        <line x1="70" y1="30" x2="70" y2="310" stroke="#333" stroke-width="2"/>
+        <text x="55" y="315" font-family="Arial" font-size="11">0</text>
+        <text x="55" y="203" font-family="Arial" font-size="11">1</text>
+        <text x="55" y="91" font-family="Arial" font-size="11">2</text>
+        <text x="20" y="180" font-family="Arial" font-size="12" transform="rotate(-90,20,180)">Ускорение (Sp)</text>
+
+        <!-- X axis -->
+        <line x1="70" y1="310" x2="470" y2="310" stroke="#333" stroke-width="2"/>
+        <text x="120" y="330" font-family="Arial" font-size="11" text-anchor="middle">1</text>
+        <text x="220" y="330" font-family="Arial" font-size="11" text-anchor="middle">2</text>
+        <text x="320" y="330" font-family="Arial" font-size="11" text-anchor="middle">4</text>
+        <text x="420" y="330" font-family="Arial" font-size="11" text-anchor="middle">8</text>
+        <text x="270" y="360" font-family="Arial" font-size="12">Брой процеси (p)</text>
+
+        <!-- Fine granularity data (128 tasks) -->
+        <!-- Static (blue dashed): 1.00, 1.55, 1.51, 1.38 -->
+        <polyline points="120,198 220,124 320,131 420,153" fill="none" stroke="#2196f3" stroke-width="2" stroke-dasharray="8,4"/>
+
+        <!-- P2P Chain (green dashed): 1.00, 1.71, 1.85, 1.79 -->
+        <polyline points="120,198 220,106 320,91 420,99" fill="none" stroke="#4caf50" stroke-width="2" stroke-dasharray="8,4"/>
+
+        <!-- P2P Full (orange solid): 1.00, 1.67, 2.14, 2.42 -->
+        <!-- Y: 198, 111, 69, 39 -->
+        <polyline points="120,198 220,111 320,69 420,39" fill="none" stroke="#ff9800" stroke-width="3"/>
+        <circle cx="120" cy="198" r="7" fill="#ff9800"/>
+        <circle cx="220" cy="111" r="7" fill="#ff9800"/>
+        <circle cx="320" cy="69" r="7" fill="#ff9800"/>
+        <circle cx="420" cy="39" r="7" fill="#ff9800"/>
+
+        <!-- Legend -->
+        <rect x="85" y="40" width="180" height="70" fill="white" stroke="#ddd"/>
+        <text x="95" y="58" font-family="Arial" font-size="10" font-weight="bold">128 ситни задачи:</text>
+        <line x1="95" y1="72" x2="125" y2="72" stroke="#2196f3" stroke-width="2" stroke-dasharray="8,4"/>
+        <text x="130" y="76" font-family="Arial" font-size="10">Статично</text>
+        <line x1="95" y1="88" x2="125" y2="88" stroke="#4caf50" stroke-width="2" stroke-dasharray="8,4"/>
+        <text x="130" y="92" font-family="Arial" font-size="10">P2P Chain</text>
+        <circle cx="110" cy="103" r="5" fill="#ff9800"/>
+        <text x="130" y="107" font-family="Arial" font-size="10">P2P Full (Sp=2.42)</text>
+    </svg>
+    <div class="figure-caption">Фиг. 7: Ускорение при фина грануларност (128 задачи) - P2P Full достига Sp=2.42</div>
+</div>
+
+<p><strong>Сравнение на грануларностите:</strong></p>
+<table>
+    <tr>
+        <th>Сценарий</th>
+        <th>Задачи</th>
+        <th>P2P Full Sp (p=8)</th>
+        <th>Подобрение</th>
+    </tr>
+    <tr>
+        <td>Едри задачи</td>
+        <td>32 × fib(42-45)</td>
+        <td>1.89</td>
+        <td>baseline</td>
+    </tr>
+    <tr>
+        <td>Ситни задачи</td>
+        <td>128 × fib(28-32)</td>
+        <td><strong>2.42</strong></td>
+        <td><strong>+28%</strong></td>
+    </tr>
+</table>
+
+<p><strong>Извод:</strong> При по-фина грануларност work stealing е по-ефективен - има повече възможности за преразпределение на работата между процесите.</p>
 
 <div class="page-break"></div>
 <h2>9. Заключение</h2>
@@ -1071,25 +1316,33 @@ while (idle_rounds < max_idle_rounds) {
 <p>Проектът демонстрира предимствата на P2P архитектурите при разпределено динамично балансиране на паралелни приложения:</p>
 
 <ol>
-    <li><strong>P2P подходът елиминира тясното място</strong> на централизираните системи и позволява по-добра скалируемост.</li>
-
-    <li><strong>Верижната топология</strong> е подходящ избор за системи с голям брой процеси, където комуникационните разходи при пълен граф биха били неприемливи.</li>
-
-    <li><strong>Пълният граф</strong> предлага по-бързо балансиране за малки клъстери, но не скалира добре.</li>
-
-    <li><strong>Изборът на топология</strong> трябва да се съобрази с:
+    <li><strong>P2P Full Graph превъзхожда Chain топологията</strong> при нехомогенно натоварване:
         <ul>
-            <li>Броя на процесите</li>
-            <li>Характеристиките на натоварването</li>
-            <li>Хардуерната топология на системата</li>
+            <li>При едри задачи: Full е с 27% по-бърз от Chain (Sp=1.89 vs 1.49)</li>
+            <li>При ситни задачи: Full е с 35% по-бърз от Chain (Sp=2.42 vs 1.79)</li>
         </ul>
     </li>
 
-    <li><strong>За облачни среди</strong> (AWS, Azure) е важно да се съобразим с:
+    <li><strong>Грануларността е критична</strong> за ефективността на work stealing:
         <ul>
-            <li>Placement groups за ниска латентност</li>
-            <li>NUMA топологията на многопроцесорните възли</li>
-            <li>Мрежовата bandwidth между availability zones</li>
+            <li>Едри задачи → ограничени възможности за преразпределение</li>
+            <li>Ситни задачи → по-добро балансиране (+28% ускорение)</li>
+        </ul>
+    </li>
+
+    <li><strong>Верижната топология</strong> е подходяща когато:
+        <ul>
+            <li>Имаме голям брой процеси (комуникационен overhead)</li>
+            <li>Хардуерът има NUMA топология</li>
+            <li>Натоварването е относително равномерно</li>
+        </ul>
+    </li>
+
+    <li><strong>Пълният граф</strong> е по-добър при:
+        <ul>
+            <li>Малък брой процеси</li>
+            <li>Силно нехомогенно натоварване</li>
+            <li>Нужда от бързо преразпределение</li>
         </ul>
     </li>
 </ol>
