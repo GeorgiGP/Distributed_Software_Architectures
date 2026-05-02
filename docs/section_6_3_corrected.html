@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body {
+    font-family: "Times New Roman", serif;
+    font-size: 12pt;
+    margin: 2.5cm;
+    line-height: 1.5;
+}
+h2 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-top: 1em;
+    border-bottom: 1px solid black;
+    padding-bottom: 5px;
+}
+h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 0.8em;
+}
+table {
+    border-collapse: collapse;
+    margin: 1em auto;
+    font-size: 11pt;
+}
+th, td {
+    border: 1px solid black;
+    padding: 6px 12px;
+    text-align: center;
+}
+th {
+    font-weight: bold;
+}
+.optimal {
+    font-weight: bold;
+}
+.caption {
+    font-style: italic;
+    font-size: 11pt;
+    margin-top: 0.3em;
+}
+ul {
+    margin: 0.5em 0;
+}
+li {
+    margin: 0.2em 0;
+}
+</style>
+</head>
+<body>
+
+<h2>6.3. Сценарии на експериментите</h2>
+
+<h3>Сценарий 1: Едри задачи (32 броя)</h3>
+<ul>
+    <li>16 тежки задачи: fib(42), fib(43), fib(44), fib(45) × 4 пъти</li>
+    <li>16 леки задачи: fib(35), fib(36), fib(37), fib(38) × 4 пъти</li>
+    <li>Нехомогенно разпределение: Процес 0 получава 75% от тежките задачи</li>
+</ul>
+
+<h3>Сценарий 2: Ситни задачи (128 броя)</h3>
+<ul>
+    <li>64 средни + 64 леки задачи (fib 28-32)</li>
+    <li>Същото нехомогенно разпределение</li>
+</ul>
+
+<p><em>Защо нехомогенно? Симулира реални сценарии: уеб сървър, научни изчисления.</em></p>
+
+<h3>Сценарий 3: Декомпозиция на Фибоначи (НОВ)</h3>
+
+<p><strong>Проблем:</strong> При сценарии 1 и 2 всяка задача fib(n) се изчислява изцяло от един процес.</p>
+
+<p><strong>Решение:</strong> fib(45) = fib(44) + fib(43), подзадачите се разпределят между процесите до праг.</p>
+
+<h3>Избор на оптимален праг за Full Graph (8p, fib 45):</h3>
+
+<table>
+<tr>
+    <th>Праг</th>
+    <th>T1 (s)</th>
+    <th>T2 (s)</th>
+    <th>T3 (s)</th>
+    <th>Средно</th>
+</tr>
+<tr>
+    <td>27</td>
+    <td>0.379</td>
+    <td>0.434</td>
+    <td>0.341</td>
+    <td>0.385</td>
+</tr>
+<tr class="optimal">
+    <td>28</td>
+    <td>0.408</td>
+    <td>0.371</td>
+    <td>0.370</td>
+    <td>0.383</td>
+</tr>
+<tr>
+    <td>29</td>
+    <td>0.393</td>
+    <td>0.357</td>
+    <td>0.353</td>
+    <td>0.368</td>
+</tr>
+<tr>
+    <td>30</td>
+    <td>0.368</td>
+    <td>0.375</td>
+    <td>0.381</td>
+    <td>0.375</td>
+</tr>
+<tr>
+    <td>32</td>
+    <td>0.390</td>
+    <td>0.325</td>
+    <td>0.398</td>
+    <td>0.371</td>
+</tr>
+</table>
+
+<p class="caption"><em>Оптимален праг Full Graph: 28</em></p>
+
+<h3>Избор на оптимален праг за Chain (8p, fib 45):</h3>
+
+<table>
+<tr>
+    <th>Праг</th>
+    <th>T1 (s)</th>
+    <th>T2 (s)</th>
+    <th>T3 (s)</th>
+    <th>Средно</th>
+    <th>Забележка</th>
+</tr>
+<tr>
+    <td>28</td>
+    <td colspan="3" style="text-align: center;">Блокира при p=1</td>
+    <td>-</td>
+    <td>Нестабилен</td>
+</tr>
+<tr>
+    <td>29</td>
+    <td colspan="3" style="text-align: center;">Блокира при p=1</td>
+    <td>-</td>
+    <td>Нестабилен</td>
+</tr>
+<tr class="optimal">
+    <td>30</td>
+    <td>0.452</td>
+    <td>0.446</td>
+    <td>0.447</td>
+    <td>0.448</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>32</td>
+    <td>0.490</td>
+    <td>0.460</td>
+    <td>0.500</td>
+    <td>0.483</td>
+    <td>По-бавен</td>
+</tr>
+</table>
+
+<p class="caption"><em>Оптимален праг Chain: 30 (минималният стабилен)</em></p>
+
+<p><strong>Защо Chain блокира при праг &lt; 30?</strong> При единичен процес (p=1) и нисък праг се генерират твърде много подзадачи, което препълва опашката. Full Graph няма този проблем поради по-ефективната комуникация.</p>
+
+</body>
+</html>

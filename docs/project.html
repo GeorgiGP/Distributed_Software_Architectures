@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>P2P Динамично Балансиране</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">P2P Динамично Балансиране</h1>
+</header>
+<h1 id="курсов-проект-по-разпределени-софтуерни-архитектури">Курсов
+проект по Разпределени Софтуерни Архитектури</h1>
+<h2
+id="p2p-архитектури-при-разпределено-динамично-балансиране-на-паралелни-приложения">P2P
+Архитектури при Разпределено Динамично Балансиране на Паралелни
+Приложения</h2>
+<hr />
+<p><strong>Изготвил:</strong> Георги Лазов</p>
+<p><strong>Дисциплина:</strong> Разпределени ИТ Архитектури</p>
+<p><strong>Специалност:</strong> Информационни системи</p>
+<hr />
+<h2 id="съдържание">Съдържание</h2>
+<ol type="1">
+<li>Въведение</li>
+<li>Теоретична основа
+<ul>
+<li>2.1. Паралелни модели и SPMD</li>
+<li>2.2. Peer-to-Peer архитектури</li>
+<li>2.3. Топологии на процесите</li>
+<li>2.4. Динамично балансиране на натоварването</li>
+</ul></li>
+<li>Анализ на архитектурите</li>
+<li>Проектиране</li>
+<li>Имплементация</li>
+<li>Тестова среда</li>
+<li>Резултати</li>
+<li>Анализ на резултатите</li>
+<li>Заключение</li>
+<li>Източници</li>
+</ol>
+<hr />
+<h2 id="въведение">1. Въведение</h2>
+<p>Паралелните и разпределени системи са ключови за решаването на
+изчислително интензивни задачи в съвременния свят. Един от основните
+предизвикателства при такива системи е ефективното разпределение на
+натоварването между процесорите/възлите, особено когато работното
+натоварване е нехомогенно или непредвидимо.</p>
+<p>В централизираните архитектури (Master-Slave) един главен процес
+координира разпределението на задачите. Този подход е прост за
+имплементация, но създава “тясно място” (bottleneck) при мащабиране.
+Алтернативата е <strong>Peer-to-Peer (P2P)</strong> архитектура, където
+процесите комуникират директно помежду си без централен координатор.</p>
+<p>Целта на този проект е да се изследва архитектурата на P2P паралелни
+приложения при разпределено динамично балансиране, като се анализират
+различни топологии и подходи за паралелизация.</p>
+<hr />
+<h2 id="теоретична-основа">2. Теоретична основа</h2>
+<h3 id="паралелни-модели-и-spmd">2.1. Паралелни модели и SPMD</h3>
+<p>При паралелното програмиране се различават два основни модела:</p>
+<ul>
+<li><strong>SPMD (Single Program Multiple Data)</strong> - всички
+процеси изпълняват една и съща програма, но върху различни данни.</li>
+<li><strong>MPMD (Multiple Program Multiple Data)</strong> - различните
+процеси могат да изпълняват различни програми.</li>
+</ul>
+<h3 id="peer-to-peer-архитектури">2.2. Peer-to-Peer архитектури</h3>
+<p>При P2P архитектурите няма централен координатор - всички възли
+(peers) са равнопоставени.</p>
+<p><strong>Предимства:</strong> - Няма единична точка на отказ -
+По-добра скалируемост - Разпределено вземане на решения</p>
+<p><strong>Недостатъци:</strong> - По-сложна координация - Възможно
+неоптимално разпределение - Комуникационни разходи при пълен граф</p>
+<h3 id="топологии-на-процесите">2.3. Топологии на процесите</h3>
+<h4 id="верижна-топология-chainring">Верижна топология (Chain/Ring)</h4>
+<pre><code>[P0] &lt;---&gt; [P1] &lt;---&gt; [P2] &lt;---&gt; [P3]</code></pre>
+<ul>
+<li>Брой връзки: O(n)</li>
+<li>Комуникационна сложност: O(n) за глобална информация</li>
+</ul>
+<h4 id="пълен-граф-all-to-all">Пълен граф (All-to-All)</h4>
+<pre><code>    [P0]
+   / | \ 
+ [P1]-[P2]
+   \ | /
+    [P3]</code></pre>
+<ul>
+<li>Брой връзки: O(n²)</li>
+<li>Комуникационна сложност: O(1) за директна комуникация</li>
+</ul>
+<h3 id="динамично-балансиране">2.4. Динамично балансиране</h3>
+<p><strong>Work Stealing:</strong> 1. Процес завършва задача 2. Ако
+опашката му е празна, поисква работа от съсед 3. Ако съседът има работа,
+споделя половината</p>
+<hr />
+<h2 id="анализ-на-архитектурите">3. Анализ на архитектурите</h2>
+<table>
+<thead>
+<tr>
+<th>Характеристика</th>
+<th>Централизирано</th>
+<th>Разпределено (P2P)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Скалируемост</td>
+<td>Ограничена</td>
+<td>По-добра</td>
+</tr>
+<tr>
+<td>Сложност</td>
+<td>Ниска</td>
+<td>По-висока</td>
+</tr>
+<tr>
+<td>Отказоустойчивост</td>
+<td>Ниска</td>
+<td>По-висока</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="проектиране">4. Проектиране</h2>
+<h3 id="реализирани-варианти">Реализирани варианти:</h3>
+<ol type="1">
+<li><strong>Статично циклично балансиране</strong> - базова линия</li>
+<li><strong>P2P Work Stealing с пълен граф</strong></li>
+<li><strong>P2P с декомпозиция на Фибоначи</strong> (нов подход)</li>
+</ol>
+<h3 id="проблем-грануларност-при-фибоначи">Проблем: Грануларност при
+Фибоначи</h3>
+<p>При стандартния подход всяка задача <code>fib(n)</code> се изчислява
+изцяло от един процес:</p>
+<pre><code>Без декомпозиция:
+P0: |====fib(45) - 2.5 секунди====|
+P1: |=fib(35)=|----idle 1.8s------|
+P2: |=fib(36)=|----idle 1.7s------|
+P3: |=fib(37)=|----idle 1.6s------|</code></pre>
+<p>Това ограничава паралелизма - един процес е “bottleneck”.</p>
+<h3 id="решение-декомпозиция-на-задачите">Решение: Декомпозиция на
+задачите</h3>
+<p>Разбиваме <code>fib(n)</code> на подзадачи, които се разпределят:</p>
+<pre><code>fib(45) = fib(44) + fib(43)
+        ↓           ↓
+      P0          P1
+       ↓           ↓
+   fib(43)     fib(42)
+   fib(42)     fib(41)
+      ...        ...</code></pre>
+<p>Когато <code>n ≤ праг</code> (напр. 30) - изчисляваме директно.</p>
+<hr />
+<h2 id="имплементация">5. Имплементация</h2>
+<h3 id="файлове">Файлове:</h3>
+<ul>
+<li><code>static_fine.c</code> - статично циклично балансиране</li>
+<li><code>p2p_chain_fine.c</code> - P2P с верижна топология</li>
+<li><code>p2p_full_fine.c</code> - P2P с пълен граф</li>
+<li><code>p2p_fib_decomposition.c</code> - <strong>P2P с
+декомпозиция</strong></li>
+</ul>
+<h3 id="ключови-структури-декомпозиция">Ключови структури
+(декомпозиция):</h3>
+<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> n<span class="op">;</span>            <span class="co">// Числото за изчисление</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> task_id<span class="op">;</span>      <span class="co">// Уникален ID</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> parent_id<span class="op">;</span>    <span class="co">// ID на родителя</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> parent_rank<span class="op">;</span>  <span class="co">// Кой процес държи родителя</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> is_left<span class="op">;</span>      <span class="co">// Ляв или десен наследник</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> Task<span class="op">;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> task_id<span class="op">;</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">long</span> <span class="dt">long</span> left_result<span class="op">;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">long</span> <span class="dt">long</span> right_result<span class="op">;</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> left_done<span class="op">,</span> right_done<span class="op">;</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... parent info за комбиниране</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> PartialResult<span class="op">;</span></span></code></pre></div>
+<hr />
+<h2 id="тестова-среда">6. Тестова среда</h2>
+<p><strong>Хардуер:</strong> - CPU: Apple M1 Pro (8 ядра) - RAM: 16 GB -
+L2 Cache: 12 MB</p>
+<p><strong>Параметри:</strong> - Процеси: 1, 2, 4, 8 - Fibonacci: 40
+(стандартни), 45 (декомпозиция) - Праг за декомпозиция: 30</p>
+<hr />
+<h2 id="резултати">7. Резултати</h2>
+<h3 id="статично-балансиране-fib-40">7.1. Статично балансиране (fib
+40)</h3>
+<table>
+<thead>
+<tr>
+<th>p</th>
+<th>Tₚ (ms)</th>
+<th>Sₚ</th>
+<th>Eₚ</th>
+<th>CPU баланс</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>652</td>
+<td>1.00</td>
+<td>1.00</td>
+<td>100% (1 ядро)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>416</td>
+<td>1.57</td>
+<td>0.78</td>
+<td>P0:100%, P1:45%</td>
+</tr>
+<tr>
+<td>4</td>
+<td>447</td>
+<td>1.46</td>
+<td>0.36</td>
+<td>P0:100%, P1-3:25%</td>
+</tr>
+<tr>
+<td>8</td>
+<td>455</td>
+<td>1.43</td>
+<td>0.18</td>
+<td>P0:100%, P1-7:15%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CPU натоварване (4 процеса):</strong></p>
+<pre><code>P0: ████████████████████████████████████████ 100%
+P1: ██████████                                25%
+P2: ██████████                                25%
+P3: ██████████                                25%
+                                              ↑
+                          P1-P3 idle, чакат P0</code></pre>
+<h3 id="p2p-work-stealing-fib-40">7.2. P2P Work Stealing (fib 40)</h3>
+<table>
+<thead>
+<tr>
+<th>p</th>
+<th>Tₚ (ms)</th>
+<th>Sₚ</th>
+<th>Eₚ</th>
+<th>CPU баланс</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>672</td>
+<td>1.00</td>
+<td>1.00</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>2</td>
+<td>380</td>
+<td>1.77</td>
+<td>0.88</td>
+<td>~92%</td>
+</tr>
+<tr>
+<td>4</td>
+<td>264</td>
+<td>2.55</td>
+<td>0.64</td>
+<td>~70%</td>
+</tr>
+<tr>
+<td>8</td>
+<td>261</td>
+<td>2.57</td>
+<td>0.32</td>
+<td>~45%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CPU натоварване (4 процеса):</strong></p>
+<pre><code>P0: ████████████████████████████             70%
+P1: ██████████████████████████████           75%
+P2: ████████████████████████████             70%
+P3: ██████████████████████████               65%</code></pre>
+<h3 id="p2p-с-декомпозиция-fib-45-праг-30">7.3. P2P с Декомпозиция (fib
+45, праг 30)</h3>
+<table>
+<thead>
+<tr>
+<th>p</th>
+<th>Tₚ (ms)</th>
+<th>Sₚ</th>
+<th>Eₚ</th>
+<th>CPU баланс</th>
+<th>Задачи</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>2028</td>
+<td>1.00</td>
+<td>1.00</td>
+<td>100%</td>
+<td>1597</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1034</td>
+<td><strong>1.96</strong></td>
+<td><strong>0.98</strong></td>
+<td>100%</td>
+<td>1597</td>
+</tr>
+<tr>
+<td>4</td>
+<td>562</td>
+<td><strong>3.61</strong></td>
+<td><strong>0.90</strong></td>
+<td>100%</td>
+<td>1597</td>
+</tr>
+<tr>
+<td>8</td>
+<td>359</td>
+<td><strong>5.65</strong></td>
+<td><strong>0.71</strong></td>
+<td>99.8%</td>
+<td>1597</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CPU натоварване (4 процеса):</strong></p>
+<pre><code>P0: ████████████████████████████████████████ 100%
+P1: ████████████████████████████████████████ 100%
+P2: ████████████████████████████████████████ 100%
+P3: ████████████████████████████████████████ 100%
+                                              ↑
+                    Пълно използване на всички ядра!</code></pre>
+<hr />
+<h2 id="анализ-на-резултатите">8. Анализ на резултатите</h2>
+<h3 id="сравнение-на-трите-подхода-8-процеса">8.1. Сравнение на трите
+подхода (8 процеса)</h3>
+<table>
+<thead>
+<tr>
+<th>Метрика</th>
+<th>Статично</th>
+<th>P2P Work Stealing</th>
+<th>Декомпозиция</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ускорение Sₚ</td>
+<td>1.43</td>
+<td>2.57</td>
+<td><strong>5.65</strong></td>
+</tr>
+<tr>
+<td>Ефективност Eₚ</td>
+<td>0.18</td>
+<td>0.32</td>
+<td><strong>0.71</strong></td>
+</tr>
+<tr>
+<td>CPU баланс</td>
+<td>15-100%</td>
+<td>~45%</td>
+<td><strong>100%</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="защо-декомпозицията-е-по-добра">8.2. Защо декомпозицията е
+по-добра?</h3>
+<p><strong>Без декомпозиция:</strong></p>
+<pre><code>Време: |====P0:fib(45)============================|
+       |==P1:fib(35)==|----idle--------------------|
+       |==P2:fib(36)==|----idle--------------------|
+       |==P3:fib(37)==|----idle--------------------|</code></pre>
+<p><strong>С декомпозиция:</strong></p>
+<pre><code>Време: |=P0:44=|=43=|=40=|=38=|=35=|=32=|=30=|...|
+       |=P1:43=|=42=|=39=|=37=|=34=|=31=|=30=|...|
+       |=P2:42=|=41=|=38=|=36=|=33=|=30=|=30=|...|
+       |=P3:41=|=40=|=37=|=35=|=32=|=30=|=30=|...|</code></pre>
+<h3 id="влияние-на-прага">8.3. Влияние на прага</h3>
+<table>
+<thead>
+<tr>
+<th>Праг</th>
+<th>Задачи</th>
+<th>Време (4p)</th>
+<th>Коментар</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>20</td>
+<td>17711</td>
+<td>0.82 s</td>
+<td>Твърде много задачи, висок overhead</td>
+</tr>
+<tr>
+<td>25</td>
+<td>4181</td>
+<td>0.58 s</td>
+<td>Среден баланс</td>
+</tr>
+<tr>
+<td><strong>30</strong></td>
+<td><strong>1597</strong></td>
+<td><strong>0.56 s</strong></td>
+<td><strong>Оптимален</strong></td>
+</tr>
+<tr>
+<td>35</td>
+<td>610</td>
+<td>0.68 s</td>
+<td>Недостатъчно задачи за баланс</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="заключение">9. Заключение</h2>
+<h3 id="ключови-изводи">Ключови изводи:</h3>
+<ol type="1">
+<li><p><strong>Статичното балансиране</strong> има таван ~1.5x ускорение
+при нехомогенно натоварване</p></li>
+<li><p><strong>Work Stealing</strong> подобрява до ~2.5x, но е
+ограничено от грануларността на задачите</p></li>
+<li><p><strong>Декомпозицията</strong> постига ~5.7x при 8 процеса
+(близко до линейно ускорение)</p></li>
+<li><p><strong>Грануларността е критична</strong> - задачи, които не
+могат да се разбият, ограничават паралелизма</p></li>
+<li><p><strong>CPU балансът</strong> е най-добрият индикатор за
+ефективност</p></li>
+</ol>
+<h3 id="препоръки-за-линейно-ускорение">Препоръки за линейно
+ускорение:</h3>
+<ol type="1">
+<li>Анализирай задачата - може ли да се декомпозира?</li>
+<li>Избери подходяща грануларност (не прекалено фина, не прекалено
+едра)</li>
+<li>Използвай work stealing за динамично балансиране</li>
+<li>Мониторирай CPU натоварването за идентифициране на дисбаланс</li>
+</ol>
+<hr />
+<h2 id="източници">10. Източници</h2>
+<ol type="1">
+<li>Wilkinson, B., &amp; Allen, M. (2004). <em>Parallel
+Programming</em>. Prentice Hall.</li>
+<li>Gropp, W., et al. (2014). <em>Using MPI</em>. MIT Press.</li>
+<li>Kumar, V., et al. (2003). <em>Introduction to Parallel
+Computing</em>. Addison-Wesley.</li>
+<li>Blumofe, R. D., &amp; Leiserson, C. E. (1999). Scheduling by work
+stealing. <em>JACM</em>, 46(5).</li>
+</ol>
+<hr />
+<p><em>Проектът е изготвен в рамките на курса по Разпределени Софтуерни
+Архитектури, 2026 г.</em></p>
+</body>
+</html>

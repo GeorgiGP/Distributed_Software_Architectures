@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body { font-family: "Times New Roman", serif; font-size: 11pt; margin: 2cm; line-height: 1.4; }
+h2 { font-size: 14pt; font-weight: bold; border-bottom: 1px solid black; padding-bottom: 4px; margin-top: 1em; }
+h3 { font-size: 12pt; font-weight: bold; margin-top: 0.8em; }
+table { border-collapse: collapse; margin: 0.8em auto; font-size: 10pt; }
+th, td { border: 1px solid black; padding: 4px 10px; text-align: center; }
+th { font-weight: bold; }
+ul { margin: 0.4em 0; }
+li { margin: 0.2em 0; }
+p { margin: 0.5em 0; }
+.highlight { background-color: #e8f5e9; font-weight: bold; }
+.figure { text-align: center; margin: 1em 0; }
+.figure img { max-width: 100%; height: auto; }
+.caption { font-style: italic; font-size: 10pt; text-align: center; margin-top: 0.3em; }
+</style>
+</head>
+<body>
+
+<h2>8. Анализ на резултатите</h2>
+
+<h3>8.1. Сравнение на ускорението (едри задачи)</h3>
+
+<p>При нехомогенно натоварване статичното разпределение е неефективно - процес 0 е претоварен.</p>
+
+<ul>
+<li>При p=4: Sp = 1.34 (очаквано ~4.0)</li>
+<li>При p=8: Sp = 1.15 (дори по-лошо от p=4!)</li>
+</ul>
+
+<p><strong>P2P Full Graph показва най-добри резултати:</strong></p>
+<ul>
+<li>При p=4: Sp = 1.81 (+35% спрямо статично)</li>
+<li>При p=8: Sp = 1.89 (+64% спрямо статично)</li>
+</ul>
+
+<h3>8.2. Влияние на декомпозицията (Сценарий 3)</h3>
+
+<p><strong>Декомпозицията драматично подобрява ускорението:</strong></p>
+
+<table>
+<tr>
+    <th>Топология</th>
+    <th>Без декомп. (Sp)</th>
+    <th>С декомп. (Sp)</th>
+    <th>Подобрение</th>
+</tr>
+<tr>
+    <td>Chain</td>
+    <td>1.49</td>
+    <td class="highlight">4.58</td>
+    <td>+207%</td>
+</tr>
+<tr>
+    <td>Full Graph</td>
+    <td>1.89</td>
+    <td class="highlight">6.33</td>
+    <td>+235%</td>
+</tr>
+</table>
+
+<p><strong>Ключови наблюдения:</strong></p>
+<ul>
+<li>Full Graph с декомпозиция постига <strong>Sp=6.33</strong> при 8 процеса (79% ефективност)</li>
+<li>Chain с декомпозиция постига <strong>Sp=4.58</strong> при 8 процеса (57% ефективност)</li>
+<li>Full Graph е <strong>38% по-бърз</strong> от Chain при декомпозиция (0.312s vs 0.426s)</li>
+</ul>
+
+<div class="figure">
+<img src="speedup_comparison.png" alt="Сравнение на ускорението">
+<p class="caption">Фигура 1: Ускорение при различен брой процеси - декомпозицията драматично подобрява резултатите</p>
+</div>
+
+<h3>8.3. Анализ на ефективността</h3>
+
+<p>Ефективността (Ep = Sp/p) показва колко добре се използват процесите:</p>
+
+<div class="figure">
+<img src="efficiency_comparison_p8.png" alt="Сравнение на ефективността">
+<p class="caption">Фигура 2: Ефективност при p=8 - декомпозицията постига 79% при Full Graph</p>
+</div>
+
+<div class="figure">
+<img src="efficiency_vs_processes.png" alt="Ефективност vs брой процеси">
+<p class="caption">Фигура 3: Ефективност при различен брой процеси</p>
+</div>
+
+<p><strong>Ключови изводи от графиките:</strong></p>
+<ul>
+<li>Без декомпозиция ефективността пада драматично при p=8 (14-30%)</li>
+<li>С декомпозиция Full Graph запазва <strong>79% ефективност</strong> при p=8</li>
+<li>Chain с декомпозиция достига <strong>57% ефективност</strong> при p=8</li>
+<li>Декомпозицията позволява истински паралелизъм - работата се разделя, не само задачите</li>
+</ul>
+
+<h3>8.4. Избор на оптимален праг</h3>
+
+<p>Прагът определя кога задачата се изчислява директно вместо да се декомпозира:</p>
+
+<table>
+<tr>
+    <th>Топология</th>
+    <th>Оптимален праг</th>
+    <th>Тествани прагове</th>
+    <th>Ограничение</th>
+</tr>
+<tr>
+    <td>Full Graph</td>
+    <td class="highlight">30</td>
+    <td>20-45</td>
+    <td>Няма - всички стабилни</td>
+</tr>
+<tr>
+    <td>Chain</td>
+    <td class="highlight">30</td>
+    <td>20-45</td>
+    <td>Праг &lt;30 блокира при p=1</td>
+</tr>
+</table>
+
+<p><strong>Защо Chain блокира при нисък праг?</strong> При p=1 и праг&lt;30 се генерират твърде много подзадачи, което препълва локалната опашка. Full Graph няма този проблем поради директната комуникация между всички процеси.</p>
+
+<h3>8.5. Сравнение на топологиите</h3>
+
+<p><strong>Верижна топология (Chain):</strong></p>
+<ul>
+<li>Всеки процес комуникира само с 2 съседа (ляв и десен)</li>
+<li>По-малко входящи заявки за обработка - добре за голям брой процеси</li>
+<li><strong>Недостатък:</strong> Претоварен процес може да бъде достигнат само от съседите</li>
+<li>Подходяща за системи с локална (NUMA) топология</li>
+</ul>
+
+<p><strong>Пълен граф (Full Graph):</strong></p>
+<ul>
+<li>Всеки процес може да комуникира директно с всеки друг</li>
+<li><strong>Предимство:</strong> Директен достъп до претоварени процеси</li>
+<li>По-голям комуникационен overhead при много процеси</li>
+<li>Идеален за нехомогенно натоварване и малки клъстери</li>
+</ul>
+
+<p><strong>Ключов извод:</strong> При декомпозиция Full Graph е с <strong>38% по-бърз</strong> от Chain. Разликата идва от способността на всеки процес да краде работа директно от най-натоварения.</p>
+
+<h3>8.6. Обобщение на резултатите при p=8</h3>
+
+<table>
+<tr>
+    <th>Сценарий</th>
+    <th>Статично Sp</th>
+    <th>Chain Sp</th>
+    <th>Full Sp</th>
+    <th>Най-добър</th>
+</tr>
+<tr>
+    <td>Едри задачи (32)</td>
+    <td>1.15</td>
+    <td>1.49</td>
+    <td>1.89</td>
+    <td>Full (+64%)</td>
+</tr>
+<tr>
+    <td>Ситни задачи (128)</td>
+    <td>1.38</td>
+    <td>1.79</td>
+    <td>2.42</td>
+    <td>Full (+75%)</td>
+</tr>
+<tr>
+    <td>Декомпозиция fib(45)</td>
+    <td>-</td>
+    <td>4.58</td>
+    <td class="highlight">6.33</td>
+    <td>Full (+38%)</td>
+</tr>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,82 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[bulgarian]{babel}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\subsection*{7.6. Сценарий 3: Декомпозиция на Фибоначи}
+
+\textbf{Chain топология (праг=30):}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+\textbf{p} & \textbf{T1 (s)} & \textbf{T2 (s)} & \textbf{T3 (s)} & \textbf{Tp=min} & \textbf{Sp} & \textbf{Ep} \\
+\hline
+1 & 1.829 & 1.835 & 1.828 & 1.828 & 1.00 & 100\% \\
+\hline
+2 & 0.948 & 1.022 & 1.000 & 0.948 & 1.93 & 96\% \\
+\hline
+4 & 0.744 & 0.757 & 0.777 & 0.744 & 2.46 & 61\% \\
+\hline
+8 & 0.456 & 0.466 & 0.458 & 0.456 & 4.01 & 50\% \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.5cm}
+\textbf{Full Graph топология (праг=28):}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+\textbf{p} & \textbf{T1 (s)} & \textbf{T2 (s)} & \textbf{T3 (s)} & \textbf{Tp=min} & \textbf{Sp} & \textbf{Ep} \\
+\hline
+1 & 1.959 & 1.942 & 1.939 & 1.939 & 1.00 & 100\% \\
+\hline
+2 & 1.009 & 1.004 & 0.999 & 0.999 & 1.94 & 97\% \\
+\hline
+4 & 0.551 & 0.564 & 0.548 & 0.548 & 3.54 & 88\% \\
+\hline
+8 & 0.415 & 0.387 & 0.363 & 0.363 & 5.34 & 67\% \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.5cm}
+\textbf{Сравнение на трите сценария при p=8:}
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Сценарий} & \textbf{Топология} & \textbf{Tp (s)} & \textbf{Sp} & \textbf{Ep} \\
+\hline
+1. Едри задачи & Chain & 4.089 & 4.72 & 59\% \\
+\hline
+1. Едри задачи & Full Graph & 3.481 & 5.55 & 69\% \\
+\hline
+2. Ситни задачи & Chain & 1.156 & 1.17 & 15\% \\
+\hline
+2. Ситни задачи & Full Graph & 0.853 & 1.59 & 20\% \\
+\hline
+3. Декомпозиция & Chain (праг=30) & 0.456 & 4.01 & 50\% \\
+\hline
+3. Декомпозиция & Full Graph (праг=28) & 0.363 & 5.34 & 67\% \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Изводи:}
+\begin{itemize}
+    \item Full Graph постига по-високо ускорение от Chain във всички сценарии
+    \item Декомпозицията дава най-добро абсолютно време (0.363s vs 3.481s за едри задачи)
+    \item При декомпозиция ефективността остава висока (67\% за Full Graph)
+    \item Chain изисква по-висок праг (30) за стабилност поради ограничената комуникация
+\end{itemize}
+
+\end{document}

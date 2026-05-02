@@ -1,0 +1,80 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[bulgarian]{babel}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\section*{6.3. Сценарии на експериментите}
+
+\textbf{Сценарий 1: Едри задачи (32 броя)}
+\begin{itemize}
+    \item 16 тежки задачи: fib(42), fib(43), fib(44), fib(45) $\times$ 4 пъти
+    \item 16 леки задачи: fib(35), fib(36), fib(37), fib(38) $\times$ 4 пъти
+    \item Нехомогенно разпределение: Процес 0 получава 75\% от тежките задачи
+\end{itemize}
+
+\textbf{Сценарий 2: Ситни задачи (128 броя)}
+\begin{itemize}
+    \item 64 средни + 64 леки задачи (fib 28-32)
+    \item Същото нехомогенно разпределение
+\end{itemize}
+
+\textit{Защо нехомогенно? Симулира реални сценарии: уеб сървър, научни изчисления.}
+
+\textbf{Сценарий 3: Декомпозиция на Фибоначи (НОВ)}
+
+\textbf{Проблем:} При сценарии 1 и 2 всяка задача fib(n) се изчислява изцяло от един процес.
+
+\textbf{Решение:} fib(45) = fib(44) + fib(43), подзадачите се разпределят между процесите до праг.
+
+\vspace{0.5cm}
+\textbf{Избор на оптимален праг за Full Graph (8p, fib 45):}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Праг} & \textbf{T1 (s)} & \textbf{T2 (s)} & \textbf{T3 (s)} & \textbf{Средно} \\
+\hline
+\textbf{28} & 0.408 & 0.371 & 0.370 & \textbf{0.383} \\
+\hline
+29 & 0.393 & 0.357 & 0.353 & 0.368 \\
+\hline
+30 & 0.368 & 0.375 & 0.381 & 0.375 \\
+\hline
+32 & 0.390 & 0.325 & 0.398 & 0.371 \\
+\hline
+\end{tabular}
+\end{center}
+
+\textit{Оптимален праг Full Graph: 28}
+
+\vspace{0.5cm}
+\textbf{Избор на оптимален праг за Chain (8p, fib 45):}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\textbf{Праг} & \textbf{T1 (s)} & \textbf{T2 (s)} & \textbf{T3 (s)} & \textbf{Средно} & \textbf{Забележка} \\
+\hline
+28 & \multicolumn{3}{c|}{Блокира при p=1} & -- & Нестабилен \\
+\hline
+29 & \multicolumn{3}{c|}{Блокира при p=1} & -- & Нестабилен \\
+\hline
+\textbf{30} & 0.452 & 0.446 & 0.447 & \textbf{0.448} & Работи \\
+\hline
+32 & 0.490 & 0.460 & 0.500 & 0.483 & По-бавен \\
+\hline
+\end{tabular}
+\end{center}
+
+\textit{Оптимален праг Chain: 30 (минималният стабилен)}
+
+\vspace{0.3cm}
+\textbf{Защо Chain блокира при праг < 30?} При единичен процес (p=1) и нисък праг се генерират твърде много подзадачи, което препълва опашката. Full Graph няма този проблем поради по-ефективната комуникация.
+
+\end{document}

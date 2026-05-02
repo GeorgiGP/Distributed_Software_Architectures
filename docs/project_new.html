@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Изготвил: Георги Лазов Дисциплина: Разпределени ИТ Архитектури Специалност: Информационни системи" />
+  <title> Курсов проект P2P Архитектури при Разпределено Динамично Балансиране на Паралелни Приложения </title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title"> <strong>Курсов проект</strong><br />
+<span>P2P Архитектури при Разпределено Динамично Балансиране на
+Паралелни Приложения</span> </h1>
+<p class="author">Изготвил: Георги Лазов<br />
+Дисциплина: Разпределени ИТ Архитектури<br />
+Специалност: Информационни системи</p>
+<p class="date">Април 2026</p>
+</header>
+<h1 id="въведение">Въведение</h1>
+<p>Паралелните и разпределени системи са ключови за решаването на
+изчислително интензивни задачи в съвременния свят. Един от основните
+предизвикателства при такива системи е ефективното разпределение на
+натоварването между процесорите/възлите, особено когато работното
+натоварване е нехомогенно или непредвидимо.</p>
+<p>В централизираните архитектури (Master-Slave) един главен процес
+координира разпределението на задачите. Този подход е прост за
+имплементация, но създава “тясно място” (bottleneck) при мащабиране.
+Алтернативата е <strong>Peer-to-Peer (P2P)</strong> архитектура, където
+процесите комуникират директно помежду си без централен координатор.</p>
+<p>Целта на този проект е да се изследва архитектурата на P2P паралелни
+приложения при разпределено динамично балансиране, като се анализират
+различни топологии на процесите - по-конкретно <strong>верижна топология
+(chain)</strong> и <strong>пълен граф (all-to-all)</strong>.</p>
+<h1 id="теоретична-основа">Теоретична основа</h1>
+<h2 id="паралелни-модели-и-spmd">Паралелни модели и SPMD</h2>
+<p>При паралелното програмиране се различават два основни модела:</p>
+<ul>
+<li><p><strong>SPMD (Single Program Multiple Data)</strong> - всички
+процеси изпълняват една и съща програма, но върху различни данни. Това е
+най-разпространеният модел при MPI приложения.</p></li>
+<li><p><strong>MPMD (Multiple Program Multiple Data)</strong> -
+различните процеси могат да изпълняват различни програми. Типичен пример
+са конвейрите за пакетна обработка.</p></li>
+</ul>
+<p>В контекста на P2P динамичното балансиране работим основно с
+<strong>SPMD модел</strong>, където всички процеси са равнопоставени и
+могат да поемат произволна част от работата.</p>
+<h2 id="peer-to-peer-архитектури">Peer-to-Peer архитектури</h2>
+<p>При P2P архитектурите няма централен координатор - всички възли
+(peers) са равнопоставени и комуникират директно помежду си.</p>
+<p><strong>Предимства:</strong></p>
+<ul>
+<li><p>Няма единична точка на отказ</p></li>
+<li><p>По-добра скалируемост</p></li>
+<li><p>Разпределено вземане на решения</p></li>
+</ul>
+<p><strong>Недостатъци:</strong></p>
+<ul>
+<li><p>По-сложна координация</p></li>
+<li><p>Възможно неоптимално разпределение</p></li>
+<li><p>Комуникационни разходи при пълен граф</p></li>
+</ul>
+<h2 id="топологии-на-процесите">Топологии на процесите</h2>
+<h3 id="верижна-топология-chainring">Верижна топология (Chain/Ring)</h3>
+<p>При верижната топология всеки процес комуникира само със съседите си
+(ляв и десен).</p>
+<p><strong>Характеристики:</strong></p>
+<ul>
+<li><p>Брой връзки: <span class="math inline"><em>n</em> − 1</span> (за
+верига) или <span class="math inline"><em>n</em></span> (за
+пръстен)</p></li>
+<li><p>Комуникационна сложност: <span
+class="math inline"><em>O</em>(<em>n</em>)</span> за глобална
+информация</p></li>
+<li><p><strong>Скалируем</strong> - добавянето на нов процес изисква
+промяна само на съседните връзки</p></li>
+</ul>
+<h3 id="пълен-граф-all-to-all">Пълен граф (All-to-All)</h3>
+<p>При пълния граф всеки процес може да комуникира директно с всеки
+друг.</p>
+<p><strong>Характеристики:</strong></p>
+<ul>
+<li><p>Брой връзки: <span
+class="math inline"><em>n</em>(<em>n</em> − 1)/2</span></p></li>
+<li><p>Комуникационна сложност: <span
+class="math inline"><em>O</em>(1)</span> за директна
+комуникация</p></li>
+<li><p><strong>Не е скалируем</strong> - комуникационните разходи растат
+квадратично</p></li>
+</ul>
+<h2 id="динамично-балансиране-на-натоварването">Динамично балансиране на
+натоварването</h2>
+<p>При динамичното балансиране работата се преразпределя по време на
+изпълнение. В P2P контекст използваме алгоритъма <strong>Work
+Stealing</strong>:</p>
+<ol>
+<li><p>Процес завършва задача</p></li>
+<li><p>Ако опашката му е празна, поисква работа от съсед</p></li>
+<li><p>Ако съседът има достатъчно работа, споделя половината</p></li>
+<li><p>Ако съседът също няма работа, продължава по веригата</p></li>
+</ol>
+<h1 id="анализ-на-архитектурите">Анализ на архитектурите</h1>
+<h2 id="централизирано-vs.-разпределено-балансиране">Централизирано vs.
+Разпределено балансиране</h2>
+<table>
+<caption>Сравнение на подходите за балансиране</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Характеристика</strong></th>
+<th style="text-align: center;"><strong>Централизирано</strong></th>
+<th style="text-align: center;"><strong>Разпределено (P2P)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Скалируемост</td>
+<td style="text-align: center;">Ограничена</td>
+<td style="text-align: center;">По-добра</td>
+</tr>
+<tr>
+<td style="text-align: left;">Сложност</td>
+<td style="text-align: center;">Ниска</td>
+<td style="text-align: center;">По-висока</td>
+</tr>
+<tr>
+<td style="text-align: left;">Глобална информация</td>
+<td style="text-align: center;">Да</td>
+<td style="text-align: center;">Не (локална)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Отказоустойчивост</td>
+<td style="text-align: center;">Ниска</td>
+<td style="text-align: center;">По-висока</td>
+</tr>
+</tbody>
+</table>
+<h2 id="сравнение-на-топологии">Сравнение на топологии</h2>
+<table>
+<caption>Сравнение на топологиите</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Критерий</strong></th>
+<th style="text-align: center;"><strong>Верига</strong></th>
+<th style="text-align: center;"><strong>Пълен граф</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Брой връзки</td>
+<td style="text-align: center;"><span
+class="math inline"><em>O</em>(<em>n</em>)</span></td>
+<td style="text-align: center;"><span
+class="math inline"><em>O</em>(<em>n</em><sup>2</sup>)</span></td>
+</tr>
+<tr>
+<td style="text-align: left;">Латентност</td>
+<td style="text-align: center;"><span
+class="math inline"><em>O</em>(<em>n</em>)</span></td>
+<td style="text-align: center;"><span
+class="math inline"><em>O</em>(1)</span></td>
+</tr>
+<tr>
+<td style="text-align: left;">Скалируемост</td>
+<td style="text-align: center;">Висока</td>
+<td style="text-align: center;">Ниска</td>
+</tr>
+<tr>
+<td style="text-align: left;">Балансиране</td>
+<td style="text-align: center;">Локално</td>
+<td style="text-align: center;">Глобално</td>
+</tr>
+</tbody>
+</table>
+<h2 id="хардуерни-аспекти">Хардуерни аспекти</h2>
+<p>При облачни инфраструктури (напр. Amazon AWS) топологията на мрежата
+влияе пряко върху производителността:</p>
+<ul>
+<li><p><strong>Placement Groups</strong> - възлите в една група са с
+ниска латентност (&lt;1ms)</p></li>
+<li><p><strong>Elastic Fabric Adapter</strong> - специализиран интерфейс
+за HPC (до 100 Gbps)</p></li>
+<li><p><strong>NUMA архитектура</strong> - трябва да се съобрази при
+многопроцесорни възли</p></li>
+</ul>
+<h1 id="проектиране">Проектиране</h1>
+<h2 id="функционално-проектиране">Функционално проектиране</h2>
+<p>В рамките на проекта са реализирани три варианта:</p>
+<ol>
+<li><p>Статично циклично балансиране (baseline)</p></li>
+<li><p>Динамично P2P балансиране с верижна топология</p></li>
+<li><p>Динамично P2P балансиране с пълен граф</p></li>
+</ol>
+<p><strong>Проблем за тестване:</strong> Рекурсивно изчисление на
+числата на Фибоначи - задача с нехомогенно натоварване.</p>
+<h2 id="архитектура-на-решението">Архитектура на решението</h2>
+<p><strong>Модел:</strong> SPMD - всички процеси изпълняват един и същ
+код.</p>
+<p><strong>Комуникационен протокол:</strong></p>
+<ul>
+<li><p><code>WORK_REQUEST</code> - искане за работа</p></li>
+<li><p><code>WORK_RESPONSE</code> - отговор с работа</p></li>
+<li><p><code>TERMINATE</code> - сигнал за край</p></li>
+</ul>
+<h2 id="uml-диаграми">UML диаграми</h2>
+<h3 id="диаграма-на-последователността-при-верижна-топология">Диаграма
+на последователността при верижна топология</h3>
+<figure data-latex-placement="H">
+
+<figcaption>Комуникация при верижна топология</figcaption>
+</figure>
+<h3 id="диаграма-на-състоянията">Диаграма на състоянията</h3>
+<figure data-latex-placement="H">
+
+<figcaption>Състояния на процес</figcaption>
+</figure>
+<h1 id="имплементация">Имплементация</h1>
+<h2 id="технологичен-избор">Технологичен избор</h2>
+<ul>
+<li><p><strong>Език:</strong> C</p></li>
+<li><p><strong>Паралелизъм:</strong> MPI (Message Passing
+Interface)</p></li>
+<li><p><strong>Компилатор:</strong> mpicc (OpenMPI)</p></li>
+</ul>
+<h2 id="програмен-код">Програмен код</h2>
+<p>Основните файлове са:</p>
+<ul>
+<li><p><code>static_fine.c</code> - статично циклично
+балансиране</p></li>
+<li><p><code>p2p_chain_fine.c</code> - P2P с верижна топология</p></li>
+<li><p><code>p2p_full_fine.c</code> - P2P с пълен граф</p></li>
+<li><p><code>p2p_fib_decomposition.c</code> - P2P с декомпозиция на
+Фибоначи</p></li>
+</ul>
+<h1 id="тестова-среда">Тестова среда</h1>
+<p><strong>Хардуерна конфигурация:</strong></p>
+<ul>
+<li><p>CPU: Apple M4 Pro (12 ядра: 8 performance + 4
+efficiency)</p></li>
+<li><p>RAM: 48 GB</p></li>
+<li><p>L1 Cache: 192 KB (per P-core), 128 KB (per E-core)</p></li>
+<li><p>L2 Cache: 16 MB (споделен)</p></li>
+<li><p>OS: macOS Sequoia</p></li>
+</ul>
+<p><strong>Параметри:</strong></p>
+<ul>
+<li><p>Брой процеси (p): 1, 2, 4, 8</p></li>
+<li><p>Fibonacci стойност: 40 (за стандартни тестове), 45 (за
+декомпозиция)</p></li>
+<li><p>Повторения: 3</p></li>
+</ul>
+<h1 id="резултати">Резултати</h1>
+<h2 id="статично-балансиране-baseline">Статично балансиране
+(Baseline)</h2>
+<p>При статичното балансиране задачите се разпределят предварително.
+Процес 0 получава 75% от тежките задачи (fib(42-45)), което създава
+дисбаланс.</p>
+<table>
+<caption>Резултати при статично балансиране (fib 40)</caption>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>p</strong></th>
+<th style="text-align: center;"><strong><span
+class="math inline"><em>T</em><sub><em>p</em></sub></span>
+(ms)</strong></th>
+<th style="text-align: center;"><strong><span
+class="math inline"><em>S</em><sub><em>p</em></sub></span></strong></th>
+<th style="text-align: center;"><strong><span
+class="math inline"><em>E</em><sub><em>p</em></sub></span></strong></th>
+<th style="text-align: center;"><strong>CPU баланс</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">652</td>
+<td style="text-align: center;">1.00</td>
+<td style="text-align: center;">1.00</td>
+<td style="text-align: center;">100% (1 ядро)</td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">416</td>
+<td style="text-align: center;">1.57</td>
+<td style="text-align: center;">0.78</td>
+<td style="text-align: center;">P0:100%, P1:45%</td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">447</td>
+<td style="text-align: center;">1.46</td>
+<td style="text-align: center;">0.36</td>
+<td style="text-align: center;">P0:100%, P1-3:25%</td>
+</tr>
+<tr>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">455</td>
+<td style="text-align: center;">1.43</td>
+<td style="text-align: center;">0.18</td>
+<td style="text-align: center;">P0:100%, P1-7:15%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Наблюдение:</strong> Процес 0 е натоварен 100%, докато
+останалите процеси са idle повечето време. Ефективността пада драстично
+с увеличаване на броя процеси.</p>
+<h2 id="p2p-пълен-граф-work-stealing">P2P Пълен граф (Work
+Stealing)</h2>
+<p>Work stealing позволява idle процеси да “крадат” задачи от
+натоварените.</p>
+<table>
+<caption>Резултати при P2P пълен граф (fib 40)</caption>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>p</strong></th>
+<th style="text-align: center;"><strong><span
+class="math inline"><em>T</em><sub><em>p</em></sub></span>
+(ms)</strong></th>
+<th style="text-align: center;"><strong><span
+class="math inline"><em>S</em><sub><em>p</em></sub></span></strong></th>
+<th style="text-align: center;"><strong><span
+class="math inline"><em>E</em><sub><em>p</em></sub></span></strong></th>
+<th style="text-align: center;"><strong>CPU баланс</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">672</td>
+<td style="text-align: center;">1.00</td>
+<td style="text-align: center;">1.00</td>
+<td style="text-align: center;">100% (1 ядро)</td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">380</td>
+<td style="text-align: center;">1.77</td>
+<td style="text-align: center;">0.88</td>
+<td style="text-align: center;">P0:95%, P1:90%</td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">264</td>
+<td style="text-align: center;">2.55</td>
+<td style="text-align: center;">0.64</td>
+<td style="text-align: center;">Средно 70%</td>
+</tr>
+<tr>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">261</td>
+<td style="text-align: center;">2.57</td>
+<td style="text-align: center;">0.32</td>
+<td style="text-align: center;">Средно 45%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Наблюдение:</strong> Work stealing подобрява баланса - idle
+процеси “крадат” задачи от натоварените. Но ускорението все още е
+ограничено, защото всяка задача <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(<em>n</em>)</span> се
+изчислява изцяло от един процес.</p>
+<p><strong>Проблем:</strong> Най-тежката задача определя минималното
+време. Ако <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(45)</span> отнема
+2.5s на един процес, никакво преразпределение не може да намали времето
+под 2.5s.</p>
+<h2 id="p2p-с-декомпозиция-на-фибоначи-нов-подход">P2P с декомпозиция на
+Фибоначи (Нов подход)</h2>
+<p>За да постигнем истински паралелизъм, <strong>декомпозираме</strong>
+самите задачи:</p>
+<ul>
+<li><p>Вместо един процес да изчислява цялото <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(45)</span></p></li>
+<li><p>Разбиваме: <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(45) = <em>f</em><em>i</em><em>b</em>(44) + <em>f</em><em>i</em><em>b</em>(43)</span></p></li>
+<li><p><span
+class="math inline"><em>f</em><em>i</em><em>b</em>(44)</span> и <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(43)</span> стават
+отделни задачи, разпределени на различни процеси</p></li>
+<li><p>Продължаваме докато <span
+class="math inline"><em>n</em> ≤ 30</span> (праг за директно
+изчисление)</p></li>
+</ul>
+<table>
+<caption>Резултати при P2P с декомпозиция (fib 45, праг 30)</caption>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>p</strong></th>
+<th style="text-align: center;"><strong><span
+class="math inline"><em>T</em><sub><em>p</em></sub></span>
+(ms)</strong></th>
+<th style="text-align: center;"><strong><span
+class="math inline"><em>S</em><sub><em>p</em></sub></span></strong></th>
+<th style="text-align: center;"><strong><span
+class="math inline"><em>E</em><sub><em>p</em></sub></span></strong></th>
+<th style="text-align: center;"><strong>CPU баланс</strong></th>
+<th style="text-align: center;"><strong>Задачи</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">2028</td>
+<td style="text-align: center;">1.00</td>
+<td style="text-align: center;">1.00</td>
+<td style="text-align: center;">100%</td>
+<td style="text-align: center;">1597</td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">1034</td>
+<td style="text-align: center;">1.96</td>
+<td style="text-align: center;">0.98</td>
+<td style="text-align: center;">100%</td>
+<td style="text-align: center;">1597</td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">562</td>
+<td style="text-align: center;">3.61</td>
+<td style="text-align: center;">0.90</td>
+<td style="text-align: center;">100%</td>
+<td style="text-align: center;">1597</td>
+</tr>
+<tr>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">359</td>
+<td style="text-align: center;">5.65</td>
+<td style="text-align: center;">0.71</td>
+<td style="text-align: center;">99.8%</td>
+<td style="text-align: center;">1597</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Наблюдение:</strong> Всички процеси работят едновременно през
+цялото време. CPU балансът е близо до 100%, което води до почти линейно
+ускорение.</p>
+<h3 id="алгоритъм-на-декомпозиция">Алгоритъм на декомпозиция</h3>
+<ol>
+<li><p><strong>Начало:</strong> Задача <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(45)</span> влиза в
+опашката на P0</p></li>
+<li><p><strong>Декомпозиция:</strong> Ако <span
+class="math inline"><em>n</em> &gt; 30</span>:</p>
+<ul>
+<li><p>Създай частичен резултат (чака две деца)</p></li>
+<li><p>Генерирай задачи <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(<em>n</em> − 1)</span>
+и <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(<em>n</em> − 2)</span></p></li>
+<li><p>Едната задача остава локално, другата се изпраща на друг
+процес</p></li>
+</ul></li>
+<li><p><strong>Директно изчисление:</strong> Ако <span
+class="math inline"><em>n</em> ≤ 30</span>: изчисли рекурсивно</p></li>
+<li><p><strong>Комбиниране:</strong> Когато и двете деца завършат <span
+class="math inline">→</span> сумирай и изпрати на родителя</p></li>
+<li><p><strong>Край:</strong> Когато коренната задача получи
+резултат</p></li>
+</ol>
+<figure data-latex-placement="H">
+
+<figcaption>Декомпозиция на fib(45) - различни цветове = различни
+процеси</figcaption>
+</figure>
+<h1 id="анализ-на-резултатите">Анализ на резултатите</h1>
+<h2 id="сравнение-на-трите-подхода">Сравнение на трите подхода</h2>
+<table>
+<caption>Сравнение при 8 процеса</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Метрика (8 процеса)</strong></th>
+<th style="text-align: center;"><strong>Статично</strong></th>
+<th style="text-align: center;"><strong>P2P Full</strong></th>
+<th style="text-align: center;"><strong>Декомпозиция</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Ускорение <span
+class="math inline"><em>S</em><sub><em>p</em></sub></span></td>
+<td style="text-align: center;">1.43</td>
+<td style="text-align: center;">2.57</td>
+<td style="text-align: center;"><strong>5.65</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">Ефективност <span
+class="math inline"><em>E</em><sub><em>p</em></sub></span></td>
+<td style="text-align: center;">0.18</td>
+<td style="text-align: center;">0.32</td>
+<td style="text-align: center;"><strong>0.71</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">CPU баланс</td>
+<td style="text-align: center;">15-100%</td>
+<td style="text-align: center;">45% ср.</td>
+<td style="text-align: center;"><strong>100%</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="основни-наблюдения">Основни наблюдения</h2>
+<ol>
+<li><p><strong>Статичното балансиране има таван <span
+class="math inline"> ≈ 1.5<em>x</em></span></strong></p>
+<ul>
+<li><p>Причина: Процес 0 изчислява най-тежките задачи сам</p></li>
+<li><p>Останалите процеси idle <span
+class="math inline"> &gt; 75%</span> от времето</p></li>
+</ul></li>
+<li><p><strong>Work Stealing подобрява до <span
+class="math inline"> ≈ 2.5<em>x</em></span></strong></p>
+<ul>
+<li><p>Задачите се преразпределят динамично</p></li>
+<li><p>Но всяка <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(<em>n</em>)</span>
+все още е “атомарна” - един процес я изчислява</p></li>
+<li><p>Ограничението е най-тежката единична задача</p></li>
+</ul></li>
+<li><p><strong>Декомпозицията постига <span
+class="math inline"> ≈ 5.7<em>x</em></span> при 8 процеса</strong></p>
+<ul>
+<li><p>Задачите се <strong>разбиват</strong> на подзадачи</p></li>
+<li><p>Работата вътре в <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(45)</span> се
+разпределя между процесите</p></li>
+<li><p>100% използване на CPU ядрата</p></li>
+<li><p>Близко до линейно ускорение (<span
+class="math inline"><em>E</em><sub><em>p</em></sub> = 0.71</span>)</p></li>
+</ul></li>
+</ol>
+<h2 id="защо-декомпозицията-е-по-добра">Защо декомпозицията е
+по-добра?</h2>
+<p>При стандартните подходи, ако имаме задачи <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(45), <em>f</em><em>i</em><em>b</em>(35), <em>f</em><em>i</em><em>b</em>(36), <em>f</em><em>i</em><em>b</em>(37)</span>:</p>
+<ul>
+<li><p><span
+class="math inline"><em>f</em><em>i</em><em>b</em>(45)</span> отнема
+<span class="math inline"> ≈ 2.5<em>s</em></span> и се изчислява от един
+процес</p></li>
+<li><p>Останалите задачи завършват бързо (<span
+class="math inline"> &lt; 0.5<em>s</em></span>)</p></li>
+<li><p>Резултат: 3 процеса са idle докато P0 работи</p></li>
+</ul>
+<p>При декомпозиция, <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(45)</span> се разбива
+на подзадачи:</p>
+<ul>
+<li><p><span
+class="math inline"><em>f</em><em>i</em><em>b</em>(45) = <em>f</em><em>i</em><em>b</em>(44) + <em>f</em><em>i</em><em>b</em>(43)</span>
+- двете подзадачи отиват на различни процеси</p></li>
+<li><p>Процесът продължава рекурсивно докато <span
+class="math inline"><em>n</em> ≤ 30</span></p></li>
+<li><p>Резултат: работата <strong>вътре</strong> в <span
+class="math inline"><em>f</em><em>i</em><em>b</em>(45)</span> се
+разпределя между всички процеси</p></li>
+</ul>
+<h2 id="влияние-на-прага-за-декомпозиция">Влияние на прага за
+декомпозиция</h2>
+<p>Прагът определя кога да спрем декомпозицията и да изчислим
+директно:</p>
+<table>
+<caption>Влияние на прага при fib(45), 4 процеса</caption>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Праг</strong></th>
+<th style="text-align: center;"><strong>Задачи</strong></th>
+<th style="text-align: center;"><strong>Време (4p)</strong></th>
+<th style="text-align: center;"><strong>Overhead</strong></th>
+<th style="text-align: center;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">17711</td>
+<td style="text-align: center;">0.82 s</td>
+<td style="text-align: center;">Висок (много малки задачи)</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;">25</td>
+<td style="text-align: center;">4181</td>
+<td style="text-align: center;">0.58 s</td>
+<td style="text-align: center;">Среден</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;">30</td>
+<td style="text-align: center;">1597</td>
+<td style="text-align: center;">0.56 s</td>
+<td style="text-align: center;">Оптимален</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;">35</td>
+<td style="text-align: center;">610</td>
+<td style="text-align: center;">0.68 s</td>
+<td style="text-align: center;">Нисък (едри задачи)</td>
+<td style="text-align: center;"></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Извод:</strong> Праг 30 е оптимален - достатъчно фина
+грануларност за добър баланс, но не прекалено много комуникация.</p>
+<h1 id="заключение">Заключение</h1>
+<p>Проектът демонстрира три подхода за паралелно изчисление:</p>
+<ol>
+<li><p><strong>Статично балансиране</strong> - просто, но неефективно
+при нехомогенно натоварване (ускорение <span
+class="math inline"> ≈ 1.5<em>x</em></span>)</p></li>
+<li><p><strong>P2P Work Stealing</strong> - динамично преразпределя
+задачи, но ограничено от грануларността (<span
+class="math inline"> ≈ 2.5<em>x</em></span>)</p></li>
+<li><p><strong>Декомпозиция на задачите</strong> - разбива работата на
+подзадачи, постига почти линейно ускорение (<span
+class="math inline"> ≈ 5.7<em>x</em></span> при 8 процеса)</p></li>
+</ol>
+<h2 id="ключови-изводи">Ключови изводи</h2>
+<ul>
+<li><p><strong>Грануларността е критична</strong> - задачи, които не
+могат да се разбият, ограничават паралелизма</p></li>
+<li><p><strong>Рекурсивните алгоритми</strong> като Фибоначи изискват
+специален подход (декомпозиция)</p></li>
+<li><p><strong>CPU балансът</strong> е най-добрият индикатор за
+ефективност на паралелизма</p></li>
+<li><p><strong>Work Stealing</strong> помага, но не решава фундаментални
+проблеми с грануларността</p></li>
+</ul>
+<h2 id="препоръки">Препоръки</h2>
+<p>За постигане на линейно ускорение:</p>
+<ol>
+<li><p>Анализирай задачата - може ли да се декомпозира?</p></li>
+<li><p>Избери подходяща грануларност (не прекалено фина, не прекалено
+едра)</p></li>
+<li><p>Използвай work stealing за динамично балансиране</p></li>
+<li><p>Мониторирай CPU натоварването за идентифициране на
+дисбаланс</p></li>
+</ol>
+<h1 class="unnumbered" id="източници">Източници</h1>
+<ol>
+<li><p>Wilkinson, B., &amp; Allen, M. (2004). <em>Parallel
+Programming</em>. Prentice Hall.</p></li>
+<li><p>Gropp, W., et al. (2014). <em>Using MPI</em>. MIT Press.</p></li>
+<li><p>Kumar, V., et al. (2003). <em>Introduction to Parallel
+Computing</em>. Addison-Wesley.</p></li>
+<li><p>Amazon Web Services. (2024). <em>EC2 Placement Groups</em>. AWS
+Documentation.</p></li>
+<li><p>Blumofe, R. D., &amp; Leiserson, C. E. (1999). Scheduling by work
+stealing. <em>JACM</em>, 46(5).</p></li>
+</ol>
+</body>
+</html>

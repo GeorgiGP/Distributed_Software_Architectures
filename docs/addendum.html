@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+@page { size: A4; margin: 2cm; }
+body { font-family: "Times New Roman", serif; font-size: 12pt; line-height: 1.5; color: #333; }
+h1 { font-size: 18pt; text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+h2 { font-size: 14pt; color: #1a1a8c; margin-top: 25px; border-bottom: 1px solid #ccc; }
+h3 { font-size: 12pt; margin-top: 20px; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; font-size: 10pt; }
+th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+th { background-color: #f0f0f0; font-weight: bold; }
+code { background-color: #f5f5f5; padding: 2px 5px; font-family: monospace; font-size: 10pt; }
+img { max-width: 100%; height: auto; display: block; margin: 15px auto; }
+hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+strong { color: #1a1a8c; }
+</style>
+</head>
+<body>
+<h1>Допълнение: P2P с Декомпозиция на Фибоначи</h1>
+<hr />
+<h2>Нов подход: Декомпозиция на задачите</h2>
+<h3>Проблем с грануларността</h3>
+<p>При стандартните подходи (статично балансиране и work stealing), всяка задача <code>fib(n)</code> се изчислява <strong>изцяло от един процес</strong>. Това създава фундаментално ограничение - ако <code>fib(45)</code> отнема 2.5 секунди, никакво преразпределение не може да намали това време под 2.5s.</p>
+<h3>Решение: Рекурсивна декомпозиция</h3>
+<p>Разбиваме самата задача на подзадачи, които се разпределят между процесите:</p>
+<p><strong>fib(45) = fib(44) + fib(43)</strong></p>
+<p>Всяка подзадача може да бъде изпратена на различен процес, което позволява истински паралелизъм <em>вътре</em> в изчислението на една голяма задача.</p>
+<p><strong>Алгоритъм:</strong></p>
+<ol>
+<li>Ако <code>n &gt; праг (30)</code> → декомпозирай на <code>fib(n-1)</code> и <code>fib(n-2)</code></li>
+<li>Изпрати едната подзадача на друг процес</li>
+<li>Когато и двете завършат → сумирай и върни на родителя</li>
+<li>Ако <code>n ≤ праг</code> → изчисли директно (рекурсивно)</li>
+</ol>
+<hr />
+<h2>Резултати от експериментите</h2>
+<h3>Таблица: P2P с Декомпозиция (fib 46, праг 30)</h3>
+<table>
+<thead>
+<tr>
+<th>Процеси</th>
+<th>Време (s)</th>
+<th>Ускорение</th>
+<th>Ефективност</th>
+<th>CPU баланс</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>2.03</td>
+<td>1.00x</td>
+<td>100%</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1.03</td>
+<td>1.96x</td>
+<td><strong>98%</strong></td>
+<td>100%</td>
+</tr>
+<tr>
+<td>4</td>
+<td>0.56</td>
+<td><strong>3.61x</strong></td>
+<td><strong>90%</strong></td>
+<td>100%</td>
+</tr>
+<tr>
+<td>8</td>
+<td>0.36</td>
+<td><strong>5.65x</strong></td>
+<td><strong>71%</strong></td>
+<td>99.8%</td>
+</tr>
+</tbody>
+</table>
+<h3>Сравнение на трите подхода (8 процеса)</h3>
+<table>
+<thead>
+<tr>
+<th>Метрика</th>
+<th>Статично</th>
+<th>Work Stealing</th>
+<th>Декомпозиция</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ускорение</td>
+<td>1.43x</td>
+<td>2.57x</td>
+<td><strong>5.65x</strong></td>
+</tr>
+<tr>
+<td>Ефективност</td>
+<td>18%</td>
+<td>32%</td>
+<td><strong>71%</strong></td>
+</tr>
+<tr>
+<td>CPU баланс</td>
+<td>15-100%</td>
+<td>~45%</td>
+<td><strong>~100%</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>CPU натоварване per-core (реални измервания)</h2>
+<h3>Статично балансиране (fib 44, 4 ядра)</h3>
+<p><img alt="Статично балансиране - per-core" src="cpu_static_cores.png" /></p>
+<p><strong>Наблюдение:</strong> Само едно ядро (Core 0) е натоварено на 100%, останалите са почти idle. Това показва лош баланс.</p>
+<hr />
+<h3>P2P Work Stealing (fib 44, 4 ядра)</h3>
+<p><img alt="P2P Work Stealing - per-core" src="cpu_p2p_full_cores.png" /></p>
+<p><strong>Наблюдение:</strong> По-добро разпределение между ядрата, но все още неравномерно.</p>
+<hr />
+<h3>P2P Декомпозиция (fib 47, 4 ядра)</h3>
+<p><img alt="P2P Декомпозиция - per-core" src="cpu_p2p_fib_decomposition_cores.png" /></p>
+<p><strong>Наблюдение:</strong> Всички 4 ядра работят на близо 100% през цялото време - отличен баланс!</p>
+<hr />
+<h2>Сравнителна графика</h2>
+<p><img alt="Сравнение на CPU натоварването per-core" src="cpu_comparison_cores.png" /></p>
+<hr />
+<h2>Влияние на прага за декомпозиция</h2>
+<table>
+<thead>
+<tr>
+<th>Праг</th>
+<th>Брой задачи</th>
+<th>Време (4p)</th>
+<th>Коментар</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>20</td>
+<td>17,711</td>
+<td>0.82s</td>
+<td>Много малки задачи, overhead</td>
+</tr>
+<tr>
+<td>25</td>
+<td>4,181</td>
+<td>0.58s</td>
+<td>Добър баланс</td>
+</tr>
+<tr>
+<td><strong>30</strong></td>
+<td><strong>1,597</strong></td>
+<td><strong>0.56s</strong></td>
+<td><strong>Оптимален</strong></td>
+</tr>
+<tr>
+<td>35</td>
+<td>610</td>
+<td>0.68s</td>
+<td>Твърде едри задачи</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Извод:</strong> Праг 30 е оптимален за Фибоначи.</p>
+<hr />
+<h2>Заключение</h2>
+<ol>
+<li>
+<p><strong>Статичното балансиране</strong> достига таван ~1.5x ускорение</p>
+</li>
+<li>
+<p><strong>Work Stealing</strong> подобрява до ~2.5x, но е ограничен от грануларността</p>
+</li>
+<li>
+<p><strong>Декомпозицията</strong> постига <strong>5.65x ускорение</strong> при 8 ядра (близко до линейно!)</p>
+</li>
+</ol>
+<h3>Ключов извод</h3>
+<p><strong>Грануларността е критична</strong> - задачи, които не могат да се разбият, ограничават паралелизма. За рекурсивни алгоритми като Фибоначи, декомпозицията е задължителна за постигане на линейно ускорение.</p>
+<hr />
+<p><em>Допълнение към курсов проект по Разпределени Софтуерни Архитектури, 2026 г.</em></p>
+</body>
+</html>

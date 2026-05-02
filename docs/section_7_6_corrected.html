@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body {
+    font-family: "Times New Roman", serif;
+    font-size: 12pt;
+    margin: 2.5cm;
+    line-height: 1.5;
+}
+h2 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-top: 1em;
+}
+h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 0.8em;
+}
+table {
+    border-collapse: collapse;
+    margin: 1em auto;
+    font-size: 11pt;
+}
+th, td {
+    border: 1px solid black;
+    padding: 6px 12px;
+    text-align: center;
+}
+th {
+    font-weight: bold;
+    background-color: white;
+}
+.caption {
+    font-style: italic;
+    font-size: 10pt;
+    text-align: center;
+    margin-top: 0.5em;
+}
+.results-box {
+    border-left: 3px solid #333;
+    padding: 10px 15px;
+    margin: 1em 0;
+    background-color: #f9f9f9;
+}
+.results-box h4 {
+    margin: 0 0 0.5em 0;
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<h2>7.6. P2P с декомпозиция (Сценарий 3) - Реални експерименти</h2>
+
+<h3>7.6.1. P2P Chain с декомпозиция (праг=30)</h3>
+
+<table>
+<tr>
+    <th>p</th>
+    <th>T1 (s)</th>
+    <th>T2 (s)</th>
+    <th>T3 (s)</th>
+    <th>Tp=min</th>
+    <th>Sp</th>
+    <th>Ep</th>
+</tr>
+<tr>
+    <td>1</td>
+    <td>1.829</td>
+    <td>1.835</td>
+    <td>1.828</td>
+    <td>1.828</td>
+    <td>1.00</td>
+    <td>1.00</td>
+</tr>
+<tr>
+    <td>2</td>
+    <td>0.948</td>
+    <td>1.022</td>
+    <td>1.000</td>
+    <td>0.948</td>
+    <td>1.93</td>
+    <td>0.96</td>
+</tr>
+<tr>
+    <td>4</td>
+    <td>0.744</td>
+    <td>0.757</td>
+    <td>0.777</td>
+    <td>0.744</td>
+    <td>2.46</td>
+    <td>0.61</td>
+</tr>
+<tr>
+    <td>8</td>
+    <td>0.456</td>
+    <td>0.466</td>
+    <td>0.458</td>
+    <td>0.456</td>
+    <td><strong>4.01</strong></td>
+    <td>0.50</td>
+</tr>
+</table>
+
+<p class="caption"><em>Таблица 8: P2P Chain с декомпозиция (fib 45, праг 30) - реални измервания</em></p>
+
+<h3>7.6.2. P2P Full Graph с декомпозиция (праг=28)</h3>
+
+<table>
+<tr>
+    <th>p</th>
+    <th>T1 (s)</th>
+    <th>T2 (s)</th>
+    <th>T3 (s)</th>
+    <th>Tp=min</th>
+    <th>Sp</th>
+    <th>Ep</th>
+</tr>
+<tr>
+    <td>1</td>
+    <td>1.959</td>
+    <td>1.942</td>
+    <td>1.939</td>
+    <td>1.939</td>
+    <td>1.00</td>
+    <td>1.00</td>
+</tr>
+<tr>
+    <td>2</td>
+    <td>1.009</td>
+    <td>1.004</td>
+    <td>0.999</td>
+    <td>0.999</td>
+    <td>1.94</td>
+    <td>0.97</td>
+</tr>
+<tr>
+    <td>4</td>
+    <td>0.551</td>
+    <td>0.564</td>
+    <td>0.548</td>
+    <td>0.548</td>
+    <td>3.54</td>
+    <td>0.88</td>
+</tr>
+<tr>
+    <td>8</td>
+    <td>0.415</td>
+    <td>0.387</td>
+    <td>0.363</td>
+    <td>0.363</td>
+    <td><strong>5.34</strong></td>
+    <td>0.67</td>
+</tr>
+</table>
+
+<p class="caption"><em>Таблица 9: P2P Full Graph с декомпозиция (fib 45, праг 28) - реални измервания</em></p>
+
+<h3>7.6.3. Сравнение на всички подходи (p=8)</h3>
+
+<table>
+<tr>
+    <th>Сценарий</th>
+    <th>Статично</th>
+    <th>Chain</th>
+    <th>Full</th>
+</tr>
+<tr>
+    <td>Едри задачи (32)</td>
+    <td>1.15</td>
+    <td>1.49</td>
+    <td>1.89</td>
+</tr>
+<tr>
+    <td>Ситни задачи (128)</td>
+    <td>1.38</td>
+    <td>1.79</td>
+    <td>2.42</td>
+</tr>
+<tr>
+    <td>Декомпозиция</td>
+    <td>-</td>
+    <td>4.01</td>
+    <td><strong>5.34</strong></td>
+</tr>
+</table>
+
+<p class="caption"><em>Таблица 10: Обобщено сравнение Sp при 8 процеса</em></p>
+
+<div class="results-box">
+<h4>Ключови резултати (реални експерименти):</h4>
+<ul>
+<li><strong>Full Graph + Decomp:</strong> Sp=5.34 при 8p (67% ефективност)</li>
+<li><strong>Chain + Decomp:</strong> Sp=4.01 при 8p (50% ефективност)</li>
+<li><strong>Подобрение:</strong> Full +183% vs без декомпозиция, Chain +169%</li>
+<li><strong>Full vs Chain:</strong> Full е 33% по-бърз при декомпозиция</li>
+</ul>
+</div>
+
+</body>
+</html>

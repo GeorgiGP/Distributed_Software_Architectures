@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body {
+    font-family: "Times New Roman", serif;
+    font-size: 11pt;
+    margin: 2cm;
+    line-height: 1.4;
+}
+h2 {
+    font-size: 13pt;
+    font-weight: bold;
+    margin-top: 0.8em;
+    border-bottom: 1px solid black;
+    padding-bottom: 4px;
+}
+h3 {
+    font-size: 11pt;
+    font-weight: bold;
+    margin-top: 0.6em;
+}
+table {
+    border-collapse: collapse;
+    margin: 0.8em auto;
+    font-size: 10pt;
+}
+th, td {
+    border: 1px solid black;
+    padding: 4px 8px;
+    text-align: center;
+}
+th {
+    font-weight: bold;
+}
+.optimal {
+    font-weight: bold;
+    background-color: #e8f5e9;
+}
+.caption {
+    font-style: italic;
+    font-size: 10pt;
+    margin-top: 0.3em;
+}
+ul {
+    margin: 0.4em 0;
+    padding-left: 1.5em;
+}
+li {
+    margin: 0.15em 0;
+}
+p {
+    margin: 0.4em 0;
+}
+</style>
+</head>
+<body>
+
+<h2>6.3. Сценарии на експериментите</h2>
+
+<h3>Сценарий 1: Едри задачи (32 броя)</h3>
+<ul>
+    <li>16 тежки задачи: fib(42), fib(43), fib(44), fib(45) × 4 пъти</li>
+    <li>16 леки задачи: fib(35), fib(36), fib(37), fib(38) × 4 пъти</li>
+    <li>Нехомогенно разпределение: Процес 0 получава 75% от тежките задачи</li>
+</ul>
+
+<h3>Сценарий 2: Ситни задачи (128 броя)</h3>
+<ul>
+    <li>64 средни + 64 леки задачи (fib 28-32)</li>
+    <li>Същото нехомогенно разпределение</li>
+</ul>
+
+<p><em>Защо нехомогенно? Симулира реални сценарии: уеб сървър, научни изчисления.</em></p>
+
+<h3>Сценарий 3: Декомпозиция на Фибоначи (НОВ)</h3>
+
+<p><strong>Проблем:</strong> При сценарии 1 и 2 всяка задача fib(n) се изчислява изцяло от един процес.</p>
+
+<p><strong>Решение:</strong> fib(45) = fib(44) + fib(43), подзадачите се разпределят между процесите до праг.</p>
+
+<h3>Избор на оптимален праг за Full Graph (8p, fib 45):</h3>
+
+<table>
+<tr>
+    <th>Праг</th>
+    <th>T1 (s)</th>
+    <th>T2 (s)</th>
+    <th>T3 (s)</th>
+    <th>Средно</th>
+    <th>Статус p=1</th>
+</tr>
+<tr>
+    <td>25</td>
+    <td>0.397</td>
+    <td>0.373</td>
+    <td>0.378</td>
+    <td>0.382</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>26</td>
+    <td>0.387</td>
+    <td>0.380</td>
+    <td>0.341</td>
+    <td>0.369</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>27</td>
+    <td>0.387</td>
+    <td>0.351</td>
+    <td>0.339</td>
+    <td>0.359</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>28</td>
+    <td>0.387</td>
+    <td>0.388</td>
+    <td>0.313</td>
+    <td>0.362</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>29</td>
+    <td>0.335</td>
+    <td>0.404</td>
+    <td>0.319</td>
+    <td>0.352</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>30</td>
+    <td>0.389</td>
+    <td>0.382</td>
+    <td>0.400</td>
+    <td>0.390</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>33</td>
+    <td>0.396</td>
+    <td>0.358</td>
+    <td>0.335</td>
+    <td>0.363</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>36</td>
+    <td>0.351</td>
+    <td>0.358</td>
+    <td>0.369</td>
+    <td>0.359</td>
+    <td>Работи</td>
+</tr>
+<tr class="optimal">
+    <td>38</td>
+    <td>0.383</td>
+    <td>0.360</td>
+    <td>0.298</td>
+    <td>0.347</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>40</td>
+    <td>0.348</td>
+    <td>0.387</td>
+    <td>0.385</td>
+    <td>0.373</td>
+    <td>Работи</td>
+</tr>
+</table>
+
+<p class="caption"><em>Оптимален праг Full Graph: 38 (минимално средно време)</em></p>
+
+<h3>Избор на оптимален праг за Chain (8p, fib 45):</h3>
+
+<table>
+<tr>
+    <th>Праг</th>
+    <th>T1 (s)</th>
+    <th>T2 (s)</th>
+    <th>T3 (s)</th>
+    <th>Средно</th>
+    <th>Статус p=1</th>
+</tr>
+<tr>
+    <td>28</td>
+    <td colspan="3" style="text-align: center;">-</td>
+    <td>~0.46</td>
+    <td style="color: red;">Блокира</td>
+</tr>
+<tr>
+    <td>29</td>
+    <td colspan="3" style="text-align: center;">-</td>
+    <td>~0.45</td>
+    <td style="color: red;">Блокира</td>
+</tr>
+<tr class="optimal">
+    <td>30</td>
+    <td>0.433</td>
+    <td>0.463</td>
+    <td>0.447</td>
+    <td>0.447</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>31</td>
+    <td>0.485</td>
+    <td>0.468</td>
+    <td>0.492</td>
+    <td>0.481</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>32</td>
+    <td>0.473</td>
+    <td>0.503</td>
+    <td>0.502</td>
+    <td>0.492</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>33</td>
+    <td>0.474</td>
+    <td>0.491</td>
+    <td>0.453</td>
+    <td>0.472</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>35</td>
+    <td>0.575</td>
+    <td>0.461</td>
+    <td>0.516</td>
+    <td>0.517</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>38</td>
+    <td>0.574</td>
+    <td>0.622</td>
+    <td>0.647</td>
+    <td>0.614</td>
+    <td>Работи</td>
+</tr>
+<tr>
+    <td>40</td>
+    <td>0.704</td>
+    <td>0.728</td>
+    <td>0.701</td>
+    <td>0.711</td>
+    <td>Работи</td>
+</tr>
+</table>
+
+<p class="caption"><em>Оптимален праг Chain: 30 (минималният стабилен праг)</em></p>
+
+<p><strong>Защо Chain блокира при праг &lt; 30?</strong> При p=1 и нисък праг се генерират твърде много подзадачи, което препълва опашката. Full Graph няма този проблем поради по-ефективната комуникация между всички процеси.</p>
+
+</body>
+</html>
